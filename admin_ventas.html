@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin de Ventas</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827;
+      --panel-2:#1f2937;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#22c55e;
+      --accent-2:#60a5fa;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --border:rgba(255,255,255,.08);
+      --shadow:0 18px 40px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,.14), transparent 28%),
+        radial-gradient(circle at top right, rgba(34,197,94,.14), transparent 22%),
+        linear-gradient(180deg, #0b1020 0%, #111827 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .app{max-width:1200px;margin:0 auto;padding:20px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:18px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:46px;height:46px;border-radius:14px;
+      background:linear-gradient(135deg,var(--accent-2),var(--accent));
+      display:grid;place-items:center;font-size:22px;
+      box-shadow:var(--shadow);
+    }
+    h1{font-size:1.3rem;margin:0}
+    .subtitle{font-size:.92rem;color:var(--muted);margin-top:3px}
+    .menu-wrap{position:relative}
+    .icon-btn{
+      width:44px;height:44px;border:none;border-radius:14px;
+      background:rgba(255,255,255,.06);color:var(--text);
+      cursor:pointer;box-shadow:var(--shadow);
+      font-size:22px;
+    }
+    .menu{
+      position:absolute;right:0;top:54px;min-width:240px;
+      background:#0b1220;border:1px solid var(--border);
+      border-radius:16px;box-shadow:var(--shadow);overflow:hidden;
+      display:none;z-index:20;
+    }
+    .menu.open{display:block}
+    .menu button{
+      width:100%;text-align:left;padding:14px 16px;border:none;background:transparent;
+      color:var(--text);cursor:pointer;font-size:.98rem;
+      border-bottom:1px solid rgba(255,255,255,.05);
+    }
+    .menu button:hover{background:rgba(255,255,255,.06)}
+    .menu button:last-child{border-bottom:none}
+    .tabs{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;
+    }
+    .tab{
+      padding:14px 12px;border:none;border-radius:16px;background:rgba(255,255,255,.06);
+      color:var(--text);font-weight:700;cursor:pointer;
+    }
+    .tab.active{background:linear-gradient(135deg,rgba(96,165,250,.26),rgba(34,197,94,.26));border:1px solid rgba(255,255,255,.1)}
+    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+    .card{
+      background:rgba(17,24,39,.78);backdrop-filter: blur(12px);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .card h2{margin:0 0 14px 0;font-size:1.05rem}
+    .muted{color:var(--muted)}
+    .section{display:none}
+    .section.active{display:block}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+    .field{grid-column:span 6}
+    .field.w4{grid-column:span 4}
+    .field.w3{grid-column:span 3}
+    .field.w8{grid-column:span 8}
+    .field.w12{grid-column:span 12}
+    label{display:block;margin-bottom:6px;font-size:.88rem;color:#cbd5e1}
+    input,select,textarea{
+      width:100%;padding:12px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);color:var(--text);outline:none;
+    }
+    input::placeholder,textarea::placeholder{color:#94a3b8}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .btn{
+      border:none;border-radius:14px;padding:12px 14px;font-weight:700;cursor:pointer;
+      color:#08111f;
+    }
+    .btn.primary{background:linear-gradient(135deg,#86efac,#22c55e)}
+    .btn.secondary{background:linear-gradient(135deg,#bfdbfe,#60a5fa)}
+    .btn.warn{background:linear-gradient(135deg,#fde68a,#f59e0b)}
+    .btn.danger{background:linear-gradient(135deg,#fecaca,#ef4444)}
+    .btn.dark{background:#e5e7eb}
+    .btn.small{padding:9px 11px;border-radius:12px;font-size:.9rem}
+    .table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.07)}
+    table{width:100%;border-collapse:collapse;min-width:680px;background:rgba(255,255,255,.03)}
+    th,td{padding:12px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);font-size:.95rem}
+    th{color:#cbd5e1;background:rgba(255,255,255,.04);position:sticky;top:0}
+    tr:hover td{background:rgba(255,255,255,.025)}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:.82rem}
+    .pill.green{background:rgba(34,197,94,.14);color:#86efac}
+    .pill.blue{background:rgba(96,165,250,.14);color:#93c5fd}
+    .pill.yellow{background:rgba(245,158,11,.14);color:#fcd34d}
+    .pill.red{background:rgba(239,68,68,.14);color:#fca5a5}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat{
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+      border-radius:16px;padding:14px;
+    }
+    .stat .k{color:#cbd5e1;font-size:.85rem}
+    .stat .v{font-size:1.4rem;font-weight:800;margin-top:6px}
+    .list{display:grid;gap:10px}
+    .sale-item{
+      display:grid;grid-template-columns:1.4fr .7fr .8fr auto;gap:10px;align-items:end;
+      padding:12px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+    }
+    .sale-item .mini{font-size:.84rem;color:var(--muted);margin-top:4px}
+    .totals{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px
+    }
+    .bigbox{
+      background:linear-gradient(180deg, rgba(96,165,250,.12), rgba(34,197,94,.10));
+      border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;
+    }
+    .bigbox .label{color:#cbd5e1;font-size:.85rem}
+    .bigbox .value{font-size:1.6rem;font-weight:900;margin-top:4px}
+    .modal{
+      position:fixed;inset:0;background:rgba(0,0,0,.6);
+      display:none;align-items:center;justify-content:center;padding:18px;z-index:50;
+    }
+    .modal.open{display:flex}
+    .modal-card{
+      width:min(560px,100%);background:#0b1220;border:1px solid rgba(255,255,255,.08);
+      border-radius:22px;box-shadow:var(--shadow);padding:18px;
+    }
+    .modal-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+    .modal-header h3{margin:0}
+    .close{
+      width:40px;height:40px;border:none;border-radius:12px;background:rgba(255,255,255,.07);
+      color:var(--text);font-size:22px;cursor:pointer;
+    }
+    .note{
+      margin-top:10px;padding:12px;border-radius:14px;
+      background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.14);color:#dbeafe;
+    }
+    .hidden{display:none !important}
+    .foot-actions{display:flex;gap:10px;flex-wrap:wrap}
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      .stats-grid,.totals{grid-template-columns:1fr 1fr}
+      .field.w4,.field.w3,.field.w6,.field.w8{grid-column:span 12}
+    }
+    @media (max-width: 640px){
+      .tabs{grid-template-columns:1fr}
+      .stats-grid,.totals{grid-template-columns:1fr}
+      .sale-item{grid-template-columns:1fr 1fr;align-items:stretch}
+      .sale-item .span2{grid-column:span 2}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">🧾</div>
+        <div>
+          <h1>Administrador de Ventas</h1>
+          <div class="subtitle">Inventario, ventas, vuelto y caja guardados en tu dispositivo</div>
+        </div>
+      </div>
+      <div class="menu-wrap">
+        <button class="icon-btn" id="menuBtn" aria-label="Abrir menú">⋮</button>
+        <div class="menu" id="menu">
+          <button data-open="sales">Modo de ventas</button>
+          <button data-open="stats">Resumen y dinero</button>
+          <button data-open="inventory">Inventario</button>
+          <button id="exportBtn">Exportar datos</button>
+          <button id="importBtn">Importar datos</button>
+          <button id="resetBtn" style="color:#fca5a5">Borrar todo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="inventory">Inventario</button>
+      <button class="tab" data-tab="sales">Modo de ventas</button>
+      <button class="tab" data-tab="stats">Resumen</button>
+    </div>
+
+    <div id="inventory" class="section active">
+      <div class="grid">
+        <div class="card">
+          <h2>Agregar producto al inventario</h2>
+          <div class="row">
+            <div class="field w6">
+              <label>Nombre del producto</label>
+              <input id="invName" placeholder="Doraditas, arroz, refresco..." />
+            </div>
+            <div class="field w3">
+              <label>Precio de venta</label>
+              <input id="invPrice" type="number" min="0" step="1" placeholder="1000" />
+            </div>
+            <div class="field w3">
+              <label>Cantidad</label>
+              <input id="invStock" type="number" min="0" step="1" placeholder="10" />
+            </div>
+            <div class="field w6">
+              <label>Categoría</label>
+              <input id="invCategory" placeholder="Abarrotes, snacks, bebidas..." />
+            </div>
+            <div class="field w6">
+              <label>Nota opcional</label>
+              <input id="invNote" placeholder="Marca, tamaño, descripción..." />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="addInventoryBtn">Agregar al inventario</button>
+            <button class="btn secondary" id="clearInventoryFormBtn">Limpiar</button>
+          </div>
+          <div class="note">Primero agregas el producto al inventario. Después lo eliges en el modo de ventas para venderlo.</div>
+        </div>
+
+        <div class="card">
+          <h2>Inventario actual</h2>
+          <div class="stats-grid" style="margin-bottom:14px">
+            <div class="stat">
+              <div class="k">Productos</div>
+              <div class="v" id="countProducts">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Unidades</div>
+              <div class="v" id="countUnits">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Valor estimado</div>
+              <div class="v" id="countValue">₡0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Ventas hechas</div>
+              <div class="v" id="countSales">0</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                  <th>Categoría</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sales" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>Modo de ventas</h2>
+          <div class="row">
+            <div class="field w12">
+              <label>Agregar objeto a la venta</label>
+              <select id="saleProduct"></select>
+            </div>
+            <div class="field w3">
+              <label>Cantidad</label>
+              <input id="saleQty" type="number" min="1" step="1" value="1" />
+            </div>
+            <div class="field w3">
+              <label>Precio manual opcional</label>
+              <input id="saleCustomPrice" type="number" min="0" step="1" placeholder="dejar vacío para usar el inventario" />
+            </div>
+            <div class="field w3">
+              <label>Descuento</label>
+              <input id="saleDiscount" type="number" min="0" step="1" value="0" />
+            </div>
+            <div class="field w3">
+              <label>Usar inventario</label>
+              <select id="saleUseStock">
+                <option value="yes">Sí, restar stock</option>
+                <option value="no">No restar stock</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="addSaleBtn">Agregar objeto</button>
+            <button class="btn danger" id="clearSaleCartBtn">Vaciar venta</button>
+          </div>
+
+          <div style="margin-top:16px" class="list" id="saleCart"></div>
+
+          <div class="totals">
+            <div class="bigbox">
+              <div class="label">Total bruto</div>
+              <div class="value" id="grossTotal">₡0</div>
+            </div>
+            <div class="bigbox">
+              <div class="label">Descuentos</div>
+              <div class="value" id="discountTotal">₡0</div>
+            </div>
+            <div class="bigbox">
+              <div class="label">Total a cobrar</div>
+              <div class="value" id="netTotal">₡0</div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:16px">
+            <button class="btn warn" id="chargeBtn">Cobrar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Consejos de cobro</h2>
+          <p class="muted">Sirve para abarrotes, snacks, comida o cualquier venta simple. Ejemplo: 2 doraditas a ₡1000 cada una = ₡2000.</p>
+          <div class="note">
+            <strong>Después de cobrar:</strong> puedes marcar si fue <em>efectivo</em> o <em>SIMPE</em>. Si fue efectivo, pones el dinero recibido y la app calcula el vuelto.
+          </div>
+          <div class="note">
+            <strong>También puedes agregar dinero</strong> que no se cobró, o dinero que ya tenías en caja.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="stats" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>Resumen de dinero</h2>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="k">Obtenido por ventas</div>
+              <div class="v" id="statSales">₡0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Vuelto dado</div>
+              <div class="v" id="statChange">₡0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Dinero agregado</div>
+              <div class="v" id="statAdded">₡0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Caja estimada</div>
+              <div class="v" id="statCash">₡0</div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:16px">
+            <button class="btn secondary" id="addMoneyBtn">Agregar plata</button>
+          </div>
+
+          <div style="margin-top:18px">
+            <h2 style="margin-bottom:10px">Movimientos recientes</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Detalle</th>
+                    <th>Monto</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Control de caja</h2>
+          <p class="muted">Aquí ves cuánto volvió, cuánto se obtuvo y cuánto hay en caja según lo registrado.</p>
+          <div class="note">
+            La app guarda todo en este navegador. Si exportas los datos, puedes llevarlos a otro celular o compu.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="paymentModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Cobrar venta</h3>
+        <button class="close" data-close="paymentModal">×</button>
+      </div>
+      <div class="row">
+        <div class="field w6">
+          <label>Forma de pago</label>
+          <select id="payMethod">
+            <option value="cash">Efectivo</option>
+            <option value="simpe">SIMPE</option>
+          </select>
+        </div>
+        <div class="field w6">
+          <label>Dinero entregado</label>
+          <input id="paidAmount" type="number" min="0" step="1" placeholder="5000" />
+        </div>
+        <div class="field w12">
+          <div class="note" id="changePreview">Vuelto: ₡0</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="confirmChargeBtn">Confirmar cobro</button>
+        <button class="btn dark" data-close="paymentModal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="moneyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Agregar dinero</h3>
+        <button class="close" data-close="moneyModal">×</button>
+      </div>
+      <div class="row">
+        <div class="field w6">
+          <label>Monto</label>
+          <input id="moneyAmount" type="number" min="0" step="1" placeholder="1000" />
+        </div>
+        <div class="field w6">
+          <label>Motivo</label>
+          <select id="moneyReason">
+            <option value="No cobrado">No cobrado</option>
+            <option value="Ya lo tenía">Ya lo tenía</option>
+            <option value="Caja inicial">Caja inicial</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field w12">
+          <label>Descripción</label>
+          <input id="moneyNote" placeholder="Ejemplo: cambio que sobró, dinero para abrir caja..." />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="confirmMoneyBtn">Guardar dinero</button>
+        <button class="btn dark" data-close="moneyModal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="importFile" accept="application/json" class="hidden" />
+
+  <script>
+    const STORAGE_KEY = "admin_ventas_app_v1";
+
+    const state = {
+      inventory: [],
+      cart: [],
+      transactions: [],
+      totals: {
+        sales: 0,
+        change: 0,
+        added: 0,
+        cash: 0
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function money(n){
+      const num = Number(n || 0);
+      return "₡" + num.toLocaleString("es-CR");
+    }
+
+    function save(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    function load(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      try{
+        const parsed = JSON.parse(raw);
+        Object.assign(state, parsed);
+        state.inventory = Array.isArray(state.inventory) ? state.inventory : [];
+        state.cart = Array.isArray(state.cart) ? state.cart : [];
+        state.transactions = Array.isArray(state.transactions) ? state.transactions : [];
+        state.totals = Object.assign({sales:0, change:0, added:0, cash:0}, state.totals || {});
+      }catch(e){
+        console.error(e);
+      }
+    }
+
+    function uid(){
+      return Math.random().toString(36).slice(2,10);
+    }
+
+    function fmtDate(ts){
+      return new Date(ts).toLocaleString("es-CR", {
+        year:"numeric", month:"2-digit", day:"2-digit",
+        hour:"2-digit", minute:"2-digit"
+      });
+    }
+
+    function inventoryValue(){
+      return state.inventory.reduce((acc, item) => acc + (Number(item.price)||0)*(Number(item.stock)||0), 0);
+    }
+
+    function totalSalesCount(){
+      return state.transactions.filter(t => t.type === "sale").length;
+    }
+
+    function getCartTotals(){
+      const gross = state.cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+      const discount = state.cart.reduce((acc, item) => acc + (item.discount || 0), 0);
+      const net = Math.max(0, gross - discount);
+      return { gross, discount, net };
+    }
+
+    function updateStats(){
+      state.totals.cash = state.totals.sales - state.totals.change + state.totals.added;
+    }
+
+    function renderInventory(){
+      $("inventoryTable").innerHTML = state.inventory.map(item => `
+        <tr>
+          <td>
+            <strong>${escapeHtml(item.name)}</strong><br>
+            <span class="muted">${escapeHtml(item.note || "")}</span>
+          </td>
+          <td>${money(item.price)}</td>
+          <td><span class="pill ${item.stock > 5 ? "green" : item.stock > 0 ? "yellow" : "red"}">${item.stock}</span></td>
+          <td>${escapeHtml(item.category || "-")}</td>
+          <td>
+            <button class="btn small secondary" onclick="editInventory('${item.id}')">Editar</button>
+            <button class="btn small danger" onclick="deleteInventory('${item.id}')">Borrar</button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="5" class="muted">No hay productos todavía.</td></tr>`;
+
+      $("countProducts").textContent = state.inventory.length;
+      $("countUnits").textContent = state.inventory.reduce((a,b)=>a + Number(b.stock || 0), 0);
+      $("countValue").textContent = money(inventoryValue());
+      $("countSales").textContent = totalSalesCount();
+
+      const options = ['<option value="">-- Elegir producto --</option>']
+        .concat(state.inventory.map(item => `<option value="${item.id}">${escapeHtml(item.name)} — ${money(item.price)} — stock ${item.stock}</option>`));
+      $("saleProduct").innerHTML = options.join("");
+    }
+
+    function renderCart(){
+      const el = $("saleCart");
+      if(!state.cart.length){
+        el.innerHTML = `<div class="note">Todavía no agregaste productos a la venta.</div>`;
+      }else{
+        el.innerHTML = state.cart.map((item, index) => `
+          <div class="sale-item">
+            <div class="span2">
+              <strong>${escapeHtml(item.name)}</strong>
+              <div class="mini">Precio: ${money(item.price)} · Descuento: ${money(item.discount || 0)}</div>
+            </div>
+            <div>
+              <label>Cantidad</label>
+              <input type="number" min="1" value="${item.qty}" onchange="updateCartQty(${index}, this.value)">
+            </div>
+            <div>
+              <label>Precio</label>
+              <input type="number" min="0" value="${item.price}" onchange="updateCartPrice(${index}, this.value)">
+            </div>
+            <div>
+              <button class="btn small danger" onclick="removeCartItem(${index})">Quitar</button>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      const {gross, discount, net} = getCartTotals();
+      $("grossTotal").textContent = money(gross);
+      $("discountTotal").textContent = money(discount);
+      $("netTotal").textContent = money(net);
+    }
+
+    function renderHistory(){
+      const items = [...state.transactions].slice().reverse().slice(0, 12);
+      $("historyTable").innerHTML = items.map(t => `
+        <tr>
+          <td>${fmtDate(t.time)}</td>
+          <td><span class="pill ${t.type === "sale" ? "green" : t.type === "change" ? "yellow" : "blue"}">${t.type}</span></td>
+          <td>${escapeHtml(t.detail)}</td>
+          <td>${money(t.amount)}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="4" class="muted">Aún no hay movimientos.</td></tr>`;
+    }
+
+    function renderStats(){
+      $("statSales").textContent = money(state.totals.sales);
+      $("statChange").textContent = money(state.totals.change);
+      $("statAdded").textContent = money(state.totals.added);
+      updateStats();
+      $("statCash").textContent = money(state.totals.cash);
+    }
+
+    function renderAll(){
+      updateStats();
+      renderInventory();
+      renderCart();
+      renderHistory();
+      renderStats();
+      const {net} = getCartTotals();
+      $("changePreview").textContent = `Vuelto: ${money(Math.max(0, Number($("paidAmount").value || 0) - net))}`;
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function switchTab(tab){
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      $(tab).classList.add("active");
+      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add("active");
+      $("menu").classList.remove("open");
+    }
+
+    function openModal(id){ $(id).classList.add("open"); }
+    function closeModal(id){ $(id).classList.remove("open"); }
+
+    function addInventory(){
+      const name = $("invName").value.trim();
+      const price = Number($("invPrice").value);
+      const stock = Number($("invStock").value);
+      const category = $("invCategory").value.trim();
+      const note = $("invNote").value.trim();
+
+      if(!name || price < 0 || stock < 0 || Number.isNaN(price) || Number.isNaN(stock)){
+        alert("Completa nombre, precio y cantidad correctamente.");
+        return;
+      }
+
+      state.inventory.unshift({
+        id: uid(),
+        name,
+        price,
+        stock,
+        category,
+        note
+      });
+
+      $("invName").value = "";
+      $("invPrice").value = "";
+      $("invStock").value = "";
+      $("invCategory").value = "";
+      $("invNote").value = "";
+      save();
+    }
+
+    function editInventory(id){
+      const item = state.inventory.find(x => x.id === id);
+      if(!item) return;
+      const name = prompt("Nombre del producto:", item.name);
+      if(name === null) return;
+      const price = prompt("Precio:", item.price);
+      if(price === null) return;
+      const stock = prompt("Cantidad:", item.stock);
+      if(stock === null) return;
+      const category = prompt("Categoría:", item.category || "");
+      if(category === null) return;
+      const note = prompt("Nota:", item.note || "");
+      if(note === null) return;
+
+      item.name = name.trim() || item.name;
+      item.price = Math.max(0, Number(price) || 0);
+      item.stock = Math.max(0, Number(stock) || 0);
+      item.category = category.trim();
+      item.note = note.trim();
+      save();
+    }
+
+    function deleteInventory(id){
+      if(!confirm("¿Borrar este producto del inventario?")) return;
+      state.inventory = state.inventory.filter(x => x.id !== id);
+      save();
+    }
+
+    function addSaleItem(){
+      const productId = $("saleProduct").value;
+      const qty = Math.max(1, Number($("saleQty").value || 1));
+      const discount = Math.max(0, Number($("saleDiscount").value || 0));
+      const customPrice = $("saleCustomPrice").value.trim();
+      const useStock = $("saleUseStock").value === "yes";
+
+      let name = "Producto sin nombre";
+      let price = 0;
+
+      if(productId){
+        const item = state.inventory.find(x => x.id === productId);
+        if(!item){
+          alert("El producto no existe.");
+          return;
+        }
+        name = item.name;
+        price = Number(item.price) || 0;
+
+        if(customPrice !== ""){
+          price = Math.max(0, Number(customPrice) || 0);
+        }
+
+        if(useStock && item.stock < qty){
+          alert("No hay suficiente stock para esa cantidad.");
+          return;
+        }
+      }else{
+        if(customPrice === ""){
+          alert("Elige un producto o escribe un precio manual.");
+          return;
+        }
+        price = Math.max(0, Number(customPrice) || 0);
+        name = prompt("Nombre del objeto o servicio:", "Venta manual") || "Venta manual";
+      }
+
+      state.cart.push({
+        name,
+        price,
+        qty,
+        discount,
+        productId: productId || null,
+        useStock
+      });
+
+      save();
+    }
+
+    function updateCartQty(index, value){
+      state.cart[index].qty = Math.max(1, Number(value) || 1);
+      save();
+    }
+    function updateCartPrice(index, value){
+      state.cart[index].price = Math.max(0, Number(value) || 0);
+      save();
+    }
+    function removeCartItem(index){
+      state.cart.splice(index,1);
+      save();
+    }
+    function clearCart(){
+      if(!confirm("¿Vaciar toda la venta?")) return;
+      state.cart = [];
+      save();
+    }
+
+    function charge(){
+      const {net} = getCartTotals();
+      if(net <= 0){
+        alert("La venta está vacía.");
+        return;
+      }
+      $("paidAmount").value = "";
+      $("payMethod").value = "cash";
+      $("changePreview").textContent = `Vuelto: ${money(0)}`;
+      openModal("paymentModal");
+    }
+
+    function confirmCharge(){
+      const {gross, discount, net} = getCartTotals();
+      const method = $("payMethod").value;
+      const paid = Number($("paidAmount").value || 0);
+
+      let change = 0;
+      if(method === "cash"){
+        if(paid < net){
+          alert("El dinero entregado es menor que el total.");
+          return;
+        }
+        change = paid - net;
+      }else{
+        change = 0;
+      }
+
+      for(const it of state.cart){
+        if(it.productId && it.useStock){
+          const inv = state.inventory.find(x => x.id === it.productId);
+          if(inv){
+            inv.stock = Math.max(0, Number(inv.stock || 0) - Number(it.qty || 0));
+          }
+        }
+      }
+
+      state.totals.sales += net;
+      state.totals.change += change;
+      state.transactions.push({
+        type: "sale",
+        time: Date.now(),
+        amount: net,
+        detail: `Venta ${method === "cash" ? "en efectivo" : "por SIMPE"} · bruto ${money(gross)} · desc ${money(discount)}`
+      });
+      if(change > 0){
+        state.transactions.push({
+          type: "change",
+          time: Date.now(),
+          amount: change,
+          detail: "Vuelto entregado"
+        });
+      }
+
+      state.cart = [];
+      closeModal("paymentModal");
+      save();
+      alert(`Venta registrada. Total: ${money(net)}${method === "cash" ? " · Vuelto: " + money(change) : ""}`);
+    }
+
+    function updateChangePreview(){
+      const {net} = getCartTotals();
+      const paid = Number($("paidAmount").value || 0);
+      $("changePreview").textContent = `Vuelto: ${money(Math.max(0, paid - net))}`;
+    }
+
+    function addMoney(){
+      $("moneyAmount").value = "";
+      $("moneyReason").value = "No cobrado";
+      $("moneyNote").value = "";
+      openModal("moneyModal");
+    }
+
+    function confirmMoney(){
+      const amount = Number($("moneyAmount").value || 0);
+      const reason = $("moneyReason").value;
+      const note = $("moneyNote").value.trim();
+      if(amount <= 0){
+        alert("Escribe un monto válido.");
+        return;
+      }
+      state.totals.added += amount;
+      state.transactions.push({
+        type: "cash",
+        time: Date.now(),
+        amount,
+        detail: `${reason}${note ? " · " + note : ""}`
+      });
+      closeModal("moneyModal");
+      save();
+    }
+
+    function exportData(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "admin-ventas-datos.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(){
+      $("importFile").click();
+    }
+
+    function handleImport(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          if(!parsed || typeof parsed !== "object") throw new Error("Archivo inválido");
+          if(!confirm("Esto reemplazará los datos actuales. ¿Continuar?")) return;
+          state.inventory = parsed.inventory || [];
+          state.cart = parsed.cart || [];
+          state.transactions = parsed.transactions || [];
+          state.totals = parsed.totals || {sales:0, change:0, added:0, cash:0};
+          save();
+          alert("Datos importados correctamente.");
+        }catch(e){
+          alert("No se pudo importar el archivo.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAll(){
+      if(!confirm("¿Seguro que quieres borrar todo?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state.inventory = [];
+      state.cart = [];
+      state.transactions = [];
+      state.totals = {sales:0, change:0, added:0, cash:0};
+      save();
+    }
+
+    document.addEventListener("click", (e) => {
+      const menu = $("menu");
+      if(!e.target.closest(".menu-wrap")) menu.classList.remove("open");
+    });
+
+    $("menuBtn").addEventListener("click", () => $("menu").classList.toggle("open"));
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll("[data-open]").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.open));
+    });
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+
+    $("addInventoryBtn").addEventListener("click", addInventory);
+    $("clearInventoryFormBtn").addEventListener("click", () => {
+      ["invName","invPrice","invStock","invCategory","invNote"].forEach(id => $(id).value = "");
+    });
+    $("addSaleBtn").addEventListener("click", addSaleItem);
+    $("clearSaleCartBtn").addEventListener("click", clearCart);
+    $("chargeBtn").addEventListener("click", charge);
+    $("confirmChargeBtn").addEventListener("click", confirmCharge);
+    $("paidAmount").addEventListener("input", updateChangePreview);
+    $("payMethod").addEventListener("change", updateChangePreview);
+    $("addMoneyBtn").addEventListener("click", addMoney);
+    $("confirmMoneyBtn").addEventListener("click", confirmMoney);
+    $("exportBtn").addEventListener("click", exportData);
+    $("importBtn").addEventListener("click", importData);
+    $("resetBtn").addEventListener("click", resetAll);
+    $("importFile").addEventListener("change", (e) => {
+      if(e.target.files && e.target.files[0]) handleImport(e.target.files[0]);
+      e.target.value = "";
+    });
+
+    load();
+    renderAll();
+
+    window.editInventory = editInventory;
+    window.deleteInventory = deleteInventory;
+    window.updateCartQty = updateCartQty;
+    window.updateCartPrice = updateCartPrice;
+    window.removeCartItem = removeCartItem;
+  </script>
+</body>
+</html>
