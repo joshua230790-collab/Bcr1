@@ -1,0 +1,853 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agenda Pastoral Pro • Supabase</title>
+  <script>
+    window.SUPABASE_URL = "https://htudsvaqtrnwalbdboxz.supabase.co";
+    window.SUPABASE_ANON_KEY = "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD";
+    window.SUPABASE_TABLE = "agendas";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#0b1020; --bg2:#10172d; --card:#121a36cc; --card2:#172044; --text:#eef2ff;
+      --muted:#aab3d6; --line:#27315a; --primary:#8b5cf6; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --shadow:0 18px 40px rgba(0,0,0,.30); --radius:22px;
+    }
+    [data-theme="light"] {
+      --bg:#edf1ff; --bg2:#ffffff; --card:#ffffffcc; --card2:#f7f8ff; --text:#10162b;
+      --muted:#5b647f; --line:#d8def3; --shadow:0 18px 35px rgba(31,41,55,.10);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139,92,246,.20), transparent 25%),
+        radial-gradient(circle at top right, rgba(245,158,11,.15), transparent 22%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--text); overflow-x:hidden;
+    }
+    button,input,select,textarea{font:inherit}
+    .hidden{display:none !important}
+    .login{min-height:100vh; display:grid; place-items:center; padding:24px}
+    .login-card{width:min(1180px,100%); display:grid; grid-template-columns:1.15fr .85fr; gap:18px}
+    .hero,.panel,.card,.topbar,.sidebar{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.08); border-radius:28px; box-shadow:var(--shadow); backdrop-filter:blur(18px)}
+    [data-theme="light"] .hero,[data-theme="light"] .panel,[data-theme="light"] .card{background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88))}
+    .hero{padding:28px; position:relative; overflow:hidden}
+    .hero::after{content:""; position:absolute; inset:auto -20% -30% auto; width:360px; height:360px; background:radial-gradient(circle, rgba(139,92,246,.35), transparent 60%)}
+    .brand-badge{display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border-radius:999px; background:rgba(139,92,246,.16); border:1px solid rgba(139,92,246,.30); font-weight:700}
+    .logo{width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg,var(--primary),#a78bfa); color:white; font-size:22px; box-shadow:0 10px 20px rgba(139,92,246,.35)}
+    .hero h1{font-size:clamp(2rem,4vw,4rem); line-height:1.04; margin:18px 0 12px; letter-spacing:-.04em}
+    .hero p{color:var(--muted); font-size:1.03rem; max-width:60ch; line-height:1.6}
+    .hero-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:22px}
+    .feature{padding:16px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08)}
+    [data-theme="light"] .feature{background:rgba(255,255,255,.8)}
+    .feature b{display:block; margin-bottom:6px}
+    .feature span{color:var(--muted); font-size:.92rem}
+    .panel{padding:22px; display:flex; flex-direction:column; justify-content:center}
+    .panel h2{margin:0 0 6px; font-size:1.55rem}
+    .panel p{margin:0 0 18px; color:var(--muted)}
+    .form-grid{display:grid; gap:12px}
+    .input,.select,textarea{width:100%; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); padding:14px 16px; border-radius:16px; outline:none; transition:.2s ease}
+    [data-theme="light"] .input,[data-theme="light"] .select,[data-theme="light"] textarea{background:#fff}
+    textarea{resize:vertical; min-height:96px}
+    .input:focus,.select:focus,textarea:focus{border-color:rgba(139,92,246,.65); box-shadow:0 0 0 4px rgba(139,92,246,.12)}
+    .btn{border:none; cursor:pointer; border-radius:16px; padding:13px 16px; background:linear-gradient(135deg,var(--primary),#a78bfa); color:white; font-weight:800; box-shadow:0 14px 24px rgba(139,92,246,.25); transition:.18s transform,.18s opacity}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--line); box-shadow:none}
+    .btn.good{background:linear-gradient(135deg,#16a34a,#22c55e)}
+    .btn.warn{background:linear-gradient(135deg,#d97706,#f59e0b)}
+    .btn.bad{background:linear-gradient(135deg,#dc2626,#ef4444)}
+    .small{font-size:.9rem; color:var(--muted)}
+    .cred{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px}
+    .chip{padding:12px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08)}
+    [data-theme="light"] .chip{background:rgba(255,255,255,.8)}
+    .chip b{display:block; font-size:.84rem}
+    .chip span{display:block; color:var(--muted); font-size:.83rem}
+    .topbar{position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:16px 18px; margin:0 0 14px; background:linear-gradient(180deg, rgba(10,14,28,.84), rgba(10,14,28,.55)); border-radius:0; border-left:none; border-right:none}
+    [data-theme="light"] .topbar{background:linear-gradient(180deg, rgba(237,241,255,.86), rgba(237,241,255,.58)); border-bottom:1px solid var(--line)}
+    .top-left{display:flex; align-items:center; gap:12px}
+    .app-title{display:flex; flex-direction:column}
+    .app-title b{font-size:1.02rem}
+    .app-title span{color:var(--muted); font-size:.86rem}
+    .top-actions{display:flex; gap:10px; flex-wrap:wrap}
+    .layout{display:grid; grid-template-columns:260px 1fr; min-height:calc(100vh - 74px)}
+    .sidebar{padding:16px; border-radius:0; border-left:none; border-top:none; border-bottom:none}
+    .nav{display:grid; gap:10px; position:sticky; top:92px}
+    .nav button{width:100%; text-align:left; padding:14px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); cursor:pointer; display:flex; align-items:center; gap:12px}
+    .nav button.active{background:linear-gradient(135deg, rgba(139,92,246,.25), rgba(139,92,246,.11)); border-color:rgba(139,92,246,.4)}
+    .content{padding:18px; max-width:1600px; width:100%}
+    .page{display:none} .page.active{display:block}
+    .grid-4{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px}
+    .grid-3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
+    .grid-2{display:grid; grid-template-columns:1.35fr .95fr; gap:14px}
+    .card{padding:18px; overflow:hidden}
+    .muted{color:var(--muted)}
+    .stat{display:flex; justify-content:space-between; align-items:flex-start; min-height:114px}
+    .stat .num{font-size:2rem; font-weight:900; letter-spacing:-.04em}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:.85rem; background:rgba(255,255,255,.03)}
+    .calendar-head{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap}
+    .calendar{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:10px}
+    .dow{text-align:center; color:var(--muted); font-size:.82rem; padding:6px 0; letter-spacing:.02em}
+    .day{min-height:118px; padding:10px; border-radius:18px; background:rgba(255,255,255,.04); border:1px solid var(--line); position:relative; cursor:pointer; transition:.18s ease}
+    .day:hover{transform:translateY(-2px); border-color:rgba(139,92,246,.5)}
+    .day.muted-day{opacity:.35}
+    .day.today{outline:2px solid rgba(139,92,246,.75); box-shadow:inset 0 0 0 1px rgba(139,92,246,.5)}
+    .day.selected{background:linear-gradient(180deg, rgba(139,92,246,.22), rgba(139,92,246,.10))}
+    .day-num{font-weight:800}
+    .dots{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px}
+    .dot{width:9px; height:9px; border-radius:99px}
+    .dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.purple{background:var(--primary)}
+    .appt-list{display:grid; gap:10px; margin-top:12px}
+    .appt{padding:12px 12px 12px 14px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.04); display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
+    .appt strong{display:block}
+    .appt small{color:var(--muted)}
+    .tag{display:inline-flex; padding:5px 9px; border-radius:999px; font-size:.78rem; font-weight:700; margin-left:6px; border:1px solid transparent}
+    .tag.pending{color:#fef3c7; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.2)}
+    .tag.confirmed{color:#dcfce7; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.2)}
+    .tag.done{color:#dbeafe; background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.2)}
+    .tag.cancelled{color:#fee2e2; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.2)}
+    .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px}
+    .toolbar .input,.toolbar .select{max-width:260px}
+    .table{width:100%; border-collapse:separate; border-spacing:0 10px}
+    .table th{color:var(--muted); font-size:.8rem; text-align:left; font-weight:700; padding:0 10px}
+    .table td{padding:14px 10px; background:rgba(255,255,255,.04); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+    .table tr td:first-child{border-left:1px solid var(--line); border-radius:16px 0 0 16px}
+    .table tr td:last-child{border-right:1px solid var(--line); border-radius:0 16px 16px 0}
+    .row-actions{display:flex; gap:8px; flex-wrap:wrap}
+    .mini{padding:9px 11px; border-radius:12px; font-size:.86rem}
+    .toast-wrap{position:fixed; right:16px; bottom:16px; z-index:1000; display:grid; gap:10px}
+    .toast{min-width:280px; max-width:360px; background:rgba(17,24,51,.96); color:white; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px 16px; box-shadow:var(--shadow); animation:slideIn .2s ease}
+    @keyframes slideIn{from{transform:translateY(8px); opacity:0} to{transform:translateY(0); opacity:1}}
+    .legend{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .legend span{display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:.85rem}
+    .kdot{width:10px; height:10px; border-radius:999px; display:inline-block}
+    .analytics{display:grid; gap:12px}
+    .bar-row{display:grid; grid-template-columns:120px 1fr 54px; gap:12px; align-items:center}
+    .bar{height:12px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; border:1px solid var(--line)}
+    .bar > div{height:100%; border-radius:inherit; background:linear-gradient(135deg,var(--primary),#c084fc)}
+    .mini-note{font-size:.82rem; color:var(--muted); margin-top:8px}
+    .switch{display:inline-flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.03)}
+    .switch input{transform:scale(1.1)}
+    .notice{padding:14px 16px; border-radius:18px; border:1px solid rgba(139,92,246,.35); background:rgba(139,92,246,.10); color:var(--text)}
+    .notice strong{display:block; margin-bottom:6px}
+    .codebox{width:100%; min-height:200px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.82rem; white-space:pre; line-height:1.4}
+    @media (max-width: 1120px){
+      .login-card{grid-template-columns:1fr}
+      .layout{grid-template-columns:1fr}
+      .sidebar{border-right:none; border-bottom:1px solid var(--line)}
+      .nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .grid-4,.grid-3,.grid-2,.hero-grid,.cred{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 760px){
+      .grid-4,.grid-3,.grid-2,.hero-grid,.cred,.nav{grid-template-columns:1fr}
+      .calendar{gap:7px}
+      .day{min-height:92px; padding:8px}
+      .topbar{padding:12px 14px}
+      .content{padding:12px}
+      .sidebar{padding:12px}
+      .day-num{font-size:.95rem}
+      .appt{flex-direction:column}
+      .top-actions .btn{padding:11px 12px}
+    }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="login">
+    <div class="login-card">
+      <section class="hero">
+        <div class="brand-badge"><div class="logo">✦</div> Agenda Pastoral Pro • Supabase</div>
+        <h1>Agenda compartida para pastores, con cuentas reales y citas en la nube.</h1>
+        <p>
+          Un solo archivo HTML que usa Supabase para iniciar sesión, crear cuentas y guardar citas para que se vean en varios teléfonos.
+        </p>
+        <div class="hero-grid">
+          <div class="feature"><b>Calendario profesional</b><span>Vista mensual con días ocupados y citas del día.</span></div>
+          <div class="feature"><b>Cuentas reales</b><span>Login y registro con Supabase Auth.</span></div>
+          <div class="feature"><b>Agenda compartida</b><span>Las citas se guardan en la nube.</span></div>
+          <div class="feature"><b>Guardado seguro</b><span>Sin LocalStorage para las citas.</span></div>
+        </div>
+        <div class="cred">
+          <div class="chip"><b>Login</b><span>Correo + contraseña</span></div>
+          <div class="chip"><b>Registro</b><span>Nombre + rol</span></div>
+          <div class="chip"><b>Base</b><span>Tabla: agendas</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Entrar o crear cuenta</h2>
+        <p>Si ya existe la cuenta, ingresás. Si no, la podés crear aquí mismo.</p>
+        <div class="form-grid">
+          <input id="fullName" class="input" type="text" placeholder="Nombre completo" autocomplete="name" />
+          <input id="email" class="input" type="email" placeholder="Correo" autocomplete="username" />
+          <input id="password" class="input" type="password" placeholder="Contraseña" autocomplete="current-password" />
+          <select id="role" class="select">
+            <option value="pastor">Pastor</option>
+            <option value="secretary">Secretaria</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <button class="btn" id="loginBtn">Ingresar</button>
+          <button class="btn secondary" id="registerBtn">Crear cuenta</button>
+          <div class="small">Si Supabase pide confirmar el correo, revisá la configuración de Auth en tu proyecto.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="appView" class="app hidden" data-theme="dark">
+    <div class="topbar">
+      <div class="top-left">
+        <div class="logo">✦</div>
+        <div class="app-title">
+          <b>Agenda Pastoral Pro</b>
+          <span id="welcomeText">Bienvenido</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary mini" id="themeBtn">🌙 Tema</button>
+        <button class="btn secondary mini" id="reloadBtn">↻ Recargar</button>
+        <button class="btn bad mini" id="logoutBtn">Salir</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="nav">
+          <button class="active" data-page="dashboard"><span class="pill">🏠</span> Dashboard</button>
+          <button data-page="calendar"><span class="pill">📅</span> Calendario</button>
+          <button data-page="appointments"><span class="pill">📝</span> Citas</button>
+          <button data-page="settings"><span class="pill">⚙️</span> Configuración</button>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h4 style="margin:0 0 6px">Sesión activa</h4>
+          <div class="muted" id="sessionCard"></div>
+          <div class="statusbar" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px">
+            <span class="pill" id="rolePill">Rol</span>
+            <span class="pill" id="syncPill">Nube</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h4 style="margin:0 0 6px">Estado de conexión</h4>
+          <div class="small" id="connText">Listo.</div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="dashboard" class="page active">
+          <div class="grid-4" id="statGrid"></div>
+          <div class="grid-2" style="margin-top:14px">
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Resumen de hoy</h3>
+                  <div class="muted" id="todayLabel"></div>
+                </div>
+                <div class="pill" id="nextLabel">Próxima cita</div>
+              </div>
+              <div id="todayAgenda" class="appt-list"></div>
+            </div>
+            <div class="card">
+              <h3>Actividad rápida</h3>
+              <div class="analytics" id="activityBars"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="calendar" class="page">
+          <div class="grid-2">
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Calendario</h3>
+                  <div class="muted">Tocá un día para ver y crear citas.</div>
+                </div>
+                <div class="toolbar" style="margin:0">
+                  <button class="btn secondary mini" id="prevMonth">◀</button>
+                  <button class="btn secondary mini" id="todayBtn">Hoy</button>
+                  <button class="btn secondary mini" id="nextMonth">▶</button>
+                </div>
+              </div>
+              <div class="statusbar">
+                <div>
+                  <b id="monthTitle"></b>
+                  <div class="legend">
+                    <span><i class="kdot" style="background:var(--good)"></i> Libre</span>
+                    <span><i class="kdot" style="background:var(--warn)"></i> Pendiente</span>
+                    <span><i class="kdot" style="background:var(--primary)"></i> Confirmada</span>
+                    <span><i class="kdot" style="background:var(--bad)"></i> Cancelada</span>
+                  </div>
+                </div>
+                <span class="pill" id="selectedDayPill"></span>
+              </div>
+              <div class="calendar" id="calendarGrid" style="margin-top:14px"></div>
+            </div>
+
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Citas del día</h3>
+                  <div class="muted" id="selectedDayLabel"></div>
+                </div>
+                <span class="pill" id="dayCount">0 citas</span>
+              </div>
+              <div id="dayAppointments" class="appt-list"></div>
+              <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+              <h4 style="margin-top:0">Nueva cita rápida</h4>
+              <div class="form-grid">
+                <input id="aName" class="input" placeholder="Nombre de la persona">
+                <input id="aPhone" class="input" placeholder="Teléfono">
+                <input id="aDate" class="input" type="date">
+                <input id="aTime" class="input" type="time">
+                <input id="aPastor" class="input" placeholder="Pastor / responsable">
+                <select id="aStatus" class="select">
+                  <option value="pending">Pendiente</option>
+                  <option value="confirmed">Confirmada</option>
+                  <option value="done">Realizada</option>
+                  <option value="cancelled">Cancelada</option>
+                </select>
+                <textarea id="aReason" class="input" rows="3" placeholder="Motivo / notas"></textarea>
+                <button class="btn good" id="saveApptBtn">Guardar cita</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="appointments" class="page">
+          <div class="card">
+            <div class="toolbar">
+              <input id="searchAppts" class="input" placeholder="Buscar por nombre, pastor, fecha o teléfono">
+              <select id="filterStatus" class="select" style="max-width:210px">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="confirmed">Confirmadas</option>
+                <option value="done">Realizadas</option>
+                <option value="cancelled">Canceladas</option>
+              </select>
+              <button class="btn secondary mini" id="clearFilters">Limpiar</button>
+            </div>
+            <div style="overflow:auto">
+              <table class="table">
+                <thead><tr><th>Persona</th><th>Fecha</th><th>Hora</th><th>Pastor</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="apptTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings" class="page">
+          <div class="grid-2">
+            <div class="card">
+              <h3>Configuración</h3>
+              <div class="form-grid">
+                <label class="switch"><input id="darkToggle" type="checkbox"> Modo oscuro</label>
+                <label class="switch"><input id="compactToggle" type="checkbox"> Vista compacta</label>
+                <button class="btn warn" id="reloadDataBtn">Recargar citas</button>
+                <button class="btn secondary" id="copySqlBtn">Copiar SQL de políticas</button>
+              </div>
+              <p class="footer-note">Las citas se leen y escriben en Supabase. Si algo no guarda, revisá las políticas RLS de la tabla.</p>
+            </div>
+            <div class="card">
+              <h3>SQL de ayuda</h3>
+              <p class="muted">Ejecutá esto en el SQL Editor si tu tabla no deja leer/escribir desde la app.</p>
+              <textarea id="sqlBox" class="codebox" readonly>alter table public.agendas enable row level security;
+
+create policy "authenticated can read agendas"
+on public.agendas for select
+to authenticated
+using (true);
+
+create policy "authenticated can insert agendas"
+on public.agendas for insert
+to authenticated
+with check (true);
+
+create policy "authenticated can update agendas"
+on public.agendas for update
+to authenticated
+using (true)
+with check (true);
+
+create policy "authenticated can delete agendas"
+on public.agendas for delete
+to authenticated
+using (true);</textarea>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script>
+    (() => {
+      const TABLE = window.SUPABASE_TABLE || "agendas";
+      const supabaseUrl = window.SUPABASE_URL;
+      const supabaseKey = window.SUPABASE_ANON_KEY;
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      });
+
+      const $ = (s, p=document) => p.querySelector(s);
+      const $$ = (s, p=document) => [...p.querySelectorAll(s)];
+      const loginView = $("#loginView");
+      const appView = $("#appView");
+      const welcomeText = $("#welcomeText");
+      const sessionCard = $("#sessionCard");
+      const rolePill = $("#rolePill");
+      const syncPill = $("#syncPill");
+      const connText = $("#connText");
+      const statGrid = $("#statGrid");
+      const todayAgenda = $("#todayAgenda");
+      const activityBars = $("#activityBars");
+      const monthTitle = $("#monthTitle");
+      const calendarGrid = $("#calendarGrid");
+      const selectedDayPill = $("#selectedDayPill");
+      const selectedDayLabel = $("#selectedDayLabel");
+      const dayAppointments = $("#dayAppointments");
+      const dayCount = $("#dayCount");
+      const aDate = $("#aDate");
+      const aTime = $("#aTime");
+      const aPastor = $("#aPastor");
+      const apptTable = $("#apptTable");
+      const todayLabel = $("#todayLabel");
+      const nextLabel = $("#nextLabel");
+      const sqlBox = $("#sqlBox");
+
+      let session = null;
+      let appointments = [];
+      let currentMonth = new Date().getMonth();
+      let currentYear = new Date().getFullYear();
+      let selectedDate = todayISO();
+      let editingId = null;
+      let compactMode = false;
+      let darkMode = true;
+
+      const statusText = {
+        pending: "Pendiente",
+        confirmed: "Confirmada",
+        done: "Realizada",
+        cancelled: "Cancelada"
+      };
+
+      const roleLabel = (r) => {
+        if (r === "admin") return "Administrador";
+        if (r === "secretary") return "Secretaria";
+        return "Pastor";
+      };
+
+      function todayISO() {
+        return new Date().toISOString().slice(0,10);
+      }
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, m => ({
+          "&":"&amp;",
+          "<":"&lt;",
+          ">":"&gt;",
+          "\"":"&quot;",
+          "'":"&#39;"
+        }[m]));
+      }
+      function toast(title, msg) {
+        const wrap = $("#toasts");
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.innerHTML = `<strong>${escapeHtml(title)}</strong><div class="muted" style="color:#dbeafe;margin-top:4px">${escapeHtml(msg)}</div>`;
+        wrap.appendChild(el);
+        setTimeout(() => { el.style.opacity="0"; el.style.transform="translateY(8px)"; }, 2600);
+        setTimeout(() => el.remove(), 3100);
+      }
+      function fmtDate(iso) {
+        const d = new Date(iso + "T00:00:00");
+        return d.toLocaleDateString("es-CR", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+      }
+      function fmtShortDate(iso) {
+        const d = new Date(iso + "T00:00:00");
+        return d.toLocaleDateString("es-CR", { day:"2-digit", month:"short" });
+      }
+      function monthTitleText(y,m) {
+        return new Date(y, m, 1).toLocaleDateString("es-CR", { month:"long", year:"numeric" });
+      }
+      function startOfMonthGrid(y,m) {
+        const first = new Date(y, m, 1);
+        const day = (first.getDay() + 6) % 7;
+        const start = new Date(y, m, 1 - day);
+        return start;
+      }
+      function showLogin() {
+        loginView.classList.remove("hidden");
+        appView.classList.add("hidden");
+      }
+      function showApp() {
+        loginView.classList.add("hidden");
+        appView.classList.remove("hidden");
+      }
+      function userName() {
+        const meta = session?.user?.user_metadata || {};
+        return meta.full_name || session?.user?.email || "Usuario";
+      }
+      function userRole() {
+        return session?.user?.user_metadata?.role || "pastor";
+      }
+      function todayAppointments() {
+        return appointments.filter(a => a.fecha === todayISO()).sort((a,b) => a.hora.localeCompare(b.hora));
+      }
+      function appointmentsOn(date) {
+        return appointments.filter(a => a.fecha === date).sort((a,b) => a.hora.localeCompare(b.hora));
+      }
+      function getStatusColor(status) {
+        if (status === "confirmed") return "purple";
+        if (status === "done") return "good";
+        if (status === "cancelled") return "bad";
+        return "warn";
+      }
+      function renderApptCard(a) {
+        return `
+          <div class="appt">
+            <div>
+              <strong>${escapeHtml(a.nombre)} <span class="tag ${a.estado}">${statusText[a.estado] || a.estado}</span></strong>
+              <small>🕒 ${escapeHtml(a.hora)} • 👤 ${escapeHtml(a.pastor || "Sin pastor")}</small><br>
+              <small>📞 ${escapeHtml(a.telefono || "Sin teléfono")} • 📅 ${escapeHtml(a.fecha)}</small><br>
+              <small>${escapeHtml(a.motivo || "Sin motivo")}</small>
+            </div>
+            <div class="row-actions">
+              <button class="btn secondary mini" onclick="window.editAppointment('${a.id}')">Editar</button>
+              <button class="btn bad mini" onclick="window.deleteAppointment('${a.id}')">Borrar</button>
+            </div>
+          </div>
+        `;
+      }
+      async function loadAppointments() {
+        connText.textContent = "Cargando citas...";
+        const { data, error } = await supabase.from(TABLE).select("*").order("fecha", { ascending: true }).order("hora", { ascending: true });
+        if (error) {
+          connText.textContent = "Error cargando citas.";
+          toast("Error", error.message);
+          throw error;
+        }
+        appointments = data || [];
+        connText.textContent = `Conectado a Supabase • ${appointments.length} cita(s) cargada(s)`;
+      }
+      function applyTheme() {
+        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+        $("#darkToggle").checked = darkMode;
+      }
+      function applyCompact() {
+        $("#appView").style.fontSize = compactMode ? "14px" : "16px";
+        $("#compactToggle").checked = compactMode;
+      }
+      function renderTop() {
+        const meta = session?.user?.user_metadata || {};
+        welcomeText.textContent = `${meta.full_name || session.user.email} • ${roleLabel(meta.role || "pastor")}`;
+        sessionCard.innerHTML = `
+          <strong>${escapeHtml(meta.full_name || "Sin nombre")}</strong><br>
+          <span>${escapeHtml(session.user.email)}</span><br>
+          <span>${escapeHtml(roleLabel(meta.role || "pastor"))}</span>
+        `;
+        rolePill.textContent = `Rol: ${roleLabel(meta.role || "pastor")}`;
+        syncPill.textContent = "Nube activa";
+      }
+      function renderDashboard() {
+        const total = appointments.length;
+        const pending = appointments.filter(a=>a.estado==="pending").length;
+        const confirmed = appointments.filter(a=>a.estado==="confirmed").length;
+        const done = appointments.filter(a=>a.estado==="done").length;
+        const counts = [
+          {label:"Citas totales", value: total, meta:"Guardadas en Supabase", icon:"📋"},
+          {label:"Pendientes", value: pending, meta:"Esperando revisión", icon:"⏳"},
+          {label:"Confirmadas", value: confirmed, meta:"Horarios ocupados", icon:"✅"},
+          {label:"Realizadas", value: done, meta:"Atendidas", icon:"🏁"},
+        ];
+        statGrid.innerHTML = counts.map(c => `
+          <div class="card stat">
+            <div>
+              <div class="pill">${c.icon} ${escapeHtml(c.label)}</div>
+              <div class="num">${c.value}</div>
+              <div class="muted">${escapeHtml(c.meta)}</div>
+            </div>
+          </div>
+        `).join("");
+
+        const todayA = todayAppointments();
+        todayLabel.textContent = fmtDate(todayISO());
+        todayAgenda.innerHTML = todayA.length ? todayA.slice(0,4).map(renderApptCard).join("") : `<div class="muted">No hay citas para hoy.</div>`;
+        const next = appointments.filter(a => a.fecha >= todayISO() && a.estado !== "cancelled").sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora))[0];
+        nextLabel.textContent = next ? `Siguiente: ${next.fecha} ${next.hora}` : "Sin citas próximas";
+
+        const statusCounts = [
+          ["pending", pending], ["confirmed", confirmed], ["done", done], ["cancelled", appointments.filter(a=>a.estado==="cancelled").length]
+        ];
+        const max = Math.max(1, ...statusCounts.map(([,n]) => n));
+        activityBars.innerHTML = statusCounts.map(([st, n]) => `
+          <div class="bar-row">
+            <div>${statusText[st]}</div>
+            <div class="bar"><div style="width:${(n/max*100).toFixed(1)}%"></div></div>
+            <div style="text-align:right">${n}</div>
+          </div>
+        `).join("");
+      }
+      function renderCalendar() {
+        monthTitle.textContent = monthTitleText(currentYear, currentMonth);
+        selectedDayPill.textContent = fmtShortDate(selectedDate);
+        selectedDayLabel.textContent = fmtDate(selectedDate);
+        const monthStart = startOfMonthGrid(currentYear, currentMonth);
+        const days = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+        calendarGrid.innerHTML = days.map(d=>`<div class="dow">${d}</div>`).join("");
+        for (let i=0; i<42; i++) {
+          const d = new Date(monthStart);
+          d.setDate(monthStart.getDate()+i);
+          const iso = d.toISOString().slice(0,10);
+          const inMonth = d.getMonth() === currentMonth;
+          const today = iso === todayISO();
+          const selected = iso === selectedDate;
+          const list = appointmentsOn(iso);
+          const dots = list.slice(0,4).map(a=>`<span class="dot ${getStatusColor(a.estado)}"></span>`).join("");
+          calendarGrid.innerHTML += `
+            <div class="day ${inMonth ? "" : "muted-day"} ${today ? "today" : ""} ${selected ? "selected" : ""}" data-date="${iso}">
+              <div class="day-num">${d.getDate()}</div>
+              <div class="dots">${dots}</div>
+              <div class="mini-note">${list.length ? list.length + " cita(s)" : "Libre"}</div>
+            </div>
+          `;
+        }
+        $("#aDate").value = selectedDate;
+        renderSelectedDay();
+      }
+      function renderSelectedDay() {
+        const dayA = appointmentsOn(selectedDate);
+        dayCount.textContent = `${dayA.length} cita(s)`;
+        selectedDayLabel.textContent = fmtDate(selectedDate);
+        selectedDayPill.textContent = fmtShortDate(selectedDate);
+        dayAppointments.innerHTML = dayA.length ? dayA.map(renderApptCard).join("") : `<div class="muted">Ese día está libre.</div>`;
+      }
+      function renderAppointmentsTable() {
+        const q = $("#searchAppts").value.trim().toLowerCase();
+        const s = $("#filterStatus").value;
+        const list = appointments
+          .filter(a => !s || a.estado === s)
+          .filter(a => !q || [a.nombre, a.telefono, a.fecha, a.hora, a.pastor, a.motivo].join(" ").toLowerCase().includes(q))
+          .sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+
+        apptTable.innerHTML = list.map(a => `
+          <tr>
+            <td><strong>${escapeHtml(a.nombre)}</strong><div class="muted">${escapeHtml(a.telefono || "")}</div></td>
+            <td>${escapeHtml(a.fecha)}</td>
+            <td>${escapeHtml(a.hora)}</td>
+            <td>${escapeHtml(a.pastor || "")}</td>
+            <td><span class="tag ${a.estado}">${statusText[a.estado] || a.estado}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="btn secondary mini" onclick="window.editAppointment('${a.id}')">Editar</button>
+                <button class="btn bad mini" onclick="window.deleteAppointment('${a.id}')">Borrar</button>
+              </div>
+            </td>
+          </tr>
+        `).join("") || `<tr><td colspan="6" class="muted" style="padding:20px 10px">No hay resultados.</td></tr>`;
+      }
+      function renderAll() {
+        renderTop();
+        renderDashboard();
+        renderCalendar();
+        renderAppointmentsTable();
+      }
+      async function registerAccount() {
+        const full_name = $("#fullName").value.trim();
+        const email = $("#email").value.trim();
+        const password = $("#password").value.trim();
+        const role = $("#role").value;
+        if (!full_name || !email || !password) return toast("Faltan datos", "Completá nombre, correo y contraseña.");
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name, role } }
+        });
+        if (error) return toast("No se pudo crear", error.message);
+
+        if (data.session) {
+          session = data.session;
+          await loadAppointments();
+          showApp();
+          renderAll();
+          toast("Cuenta creada", "Ya entró a la app.");
+        } else {
+          toast("Cuenta creada", "Revisá si tu proyecto pide confirmar el correo. Si pasa eso, desactivá esa opción en Supabase Auth.");
+        }
+      }
+      async function loginAccount() {
+        const email = $("#email").value.trim();
+        const password = $("#password").value.trim();
+        if (!email || !password) return toast("Faltan datos", "Completá correo y contraseña.");
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return toast("No se pudo entrar", error.message);
+        session = data.session;
+        await loadAppointments();
+        showApp();
+        renderAll();
+        toast("Sesión iniciada", "Bienvenido.");
+      }
+      async function logout() {
+        await supabase.auth.signOut();
+        session = null;
+        appointments = [];
+        showLogin();
+      }
+      async function saveAppointment() {
+        const nombre = $("#aName").value.trim();
+        const telefono = $("#aPhone").value.trim();
+        const fecha = $("#aDate").value;
+        const hora = $("#aTime").value;
+        const pastor = $("#aPastor").value.trim();
+        const estado = $("#aStatus").value;
+        const motivo = $("#aReason").value.trim();
+
+        if (!nombre || !fecha || !hora || !pastor) return toast("Faltan datos", "Completá nombre, fecha, hora y pastor.");
+        const conflict = appointments.find(a => a.fecha === fecha && a.hora === hora && a.pastor === pastor && a.id !== editingId);
+        if (conflict) return toast("Horario ocupado", "Ya existe una cita para ese pastor a esa hora.");
+
+        const payload = { nombre, telefono, fecha, hora, motivo, pastor, estado };
+        if (editingId) {
+          const { error } = await supabase.from(TABLE).update(payload).eq("id", editingId);
+          if (error) return toast("Error", error.message);
+          toast("Actualizada", "La cita quedó guardada.");
+          editingId = null;
+          $("#saveApptBtn").textContent = "Guardar cita";
+        } else {
+          const { error } = await supabase.from(TABLE).insert(payload);
+          if (error) return toast("Error", error.message);
+          toast("Guardada", "La cita quedó en la nube.");
+        }
+        $("#aName").value = "";
+        $("#aPhone").value = "";
+        $("#aReason").value = "";
+        await loadAppointments();
+        renderAll();
+      }
+      async function reloadEverything() {
+        try {
+          await loadAppointments();
+          renderAll();
+          toast("Actualizado", "Se recargaron las citas.");
+        } catch (e) {}
+      }
+      window.editAppointment = async function(id) {
+        const a = appointments.find(x => x.id === id);
+        if (!a) return;
+        editingId = id;
+        $("#aName").value = a.nombre || "";
+        $("#aPhone").value = a.telefono || "";
+        $("#aDate").value = a.fecha || todayISO();
+        $("#aTime").value = a.hora || "09:00";
+        $("#aPastor").value = a.pastor || "";
+        $("#aStatus").value = a.estado || "pending";
+        $("#aReason").value = a.motivo || "";
+        $("#saveApptBtn").textContent = "Actualizar cita";
+        selectedDate = a.fecha || todayISO();
+        currentMonth = new Date(selectedDate + "T00:00:00").getMonth();
+        currentYear = new Date(selectedDate + "T00:00:00").getFullYear();
+        renderCalendar();
+        $("#calendar").scrollIntoView({behavior:"smooth"});
+      };
+      window.deleteAppointment = async function(id) {
+        const a = appointments.find(x => x.id === id);
+        if (!a) return;
+        if (!confirm(`Borrar cita de ${a.nombre}?`)) return;
+        const { error } = await supabase.from(TABLE).delete().eq("id", id);
+        if (error) return toast("Error", error.message);
+        await loadAppointments();
+        renderAll();
+        toast("Borrada", "La cita fue eliminada.");
+      };
+
+      $("#loginBtn").addEventListener("click", loginAccount);
+      $("#registerBtn").addEventListener("click", registerAccount);
+      $("#logoutBtn").addEventListener("click", logout);
+      $("#reloadBtn").addEventListener("click", reloadEverything);
+      $("#themeBtn").addEventListener("click", () => {
+        darkMode = !darkMode; applyTheme();
+      });
+      $("#prevMonth").addEventListener("click", () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); });
+      $("#nextMonth").addEventListener("click", () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); });
+      $("#todayBtn").addEventListener("click", () => { selectedDate = todayISO(); const t = new Date(); currentMonth = t.getMonth(); currentYear = t.getFullYear(); renderAll(); });
+      $("#aDate").addEventListener("change", e => { selectedDate = e.target.value || todayISO(); const d = new Date(selectedDate + "T00:00:00"); currentMonth = d.getMonth(); currentYear = d.getFullYear(); renderCalendar(); });
+      $("#saveApptBtn").addEventListener("click", saveAppointment);
+      $("#searchAppts").addEventListener("input", renderAppointmentsTable);
+      $("#filterStatus").addEventListener("change", renderAppointmentsTable);
+      $("#clearFilters").addEventListener("click", () => { $("#searchAppts").value = ""; $("#filterStatus").value = ""; renderAppointmentsTable(); });
+      $("#darkToggle").addEventListener("change", e => { darkMode = e.target.checked; applyTheme(); });
+      $("#compactToggle").addEventListener("change", e => { compactMode = e.target.checked; applyCompact(); });
+      $("#reloadDataBtn").addEventListener("click", reloadEverything);
+      $("#copySqlBtn").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(sqlBox.value);
+          toast("Copiado", "SQL copiado al portapapeles.");
+        } catch {
+          toast("No se pudo copiar", "Copiá manualmente el texto.");
+        }
+      });
+
+      $$(".nav button").forEach(btn => btn.addEventListener("click", () => {
+        $$(".nav button").forEach(b => b.classList.toggle("active", b === btn));
+        $$(".page").forEach(p => p.classList.toggle("active", p.id === btn.dataset.page));
+      }));
+
+      $("#calendarGrid").addEventListener("click", e => {
+        const el = e.target.closest(".day");
+        if (!el) return;
+        selectedDate = el.dataset.date;
+        $("#aDate").value = selectedDate;
+        renderCalendar();
+      });
+
+      async function bootstrap() {
+        if (!window.supabase || !window.supabase.createClient) {
+          toast("Supabase no cargó", "Revisá la conexión a internet.");
+          connText.textContent = "Supabase no cargó.";
+          return;
+        }
+        try {
+          applyTheme();
+          applyCompact();
+          const { data } = await supabase.auth.getSession();
+          session = data.session;
+          if (session) {
+            showApp();
+            await loadAppointments();
+            renderAll();
+            connText.textContent = "Conectado a Supabase.";
+          } else {
+            showLogin();
+            connText.textContent = "Esperando inicio de sesión.";
+          }
+        } catch (err) {
+          toast("Error", err.message || "No se pudo iniciar.");
+        }
+
+        supabase.auth.onAuthStateChange(async (_event, newSession) => {
+          session = newSession;
+          if (session) {
+            showApp();
+            await loadAppointments();
+            renderAll();
+          } else {
+            showLogin();
+          }
+        });
+
+        aDate.value = todayISO();
+        aTime.value = "09:00";
+        aPastor.value = "";
+        selectedDate = todayISO();
+      }
+
+      bootstrap();
+    })();
+  </script>
+</body>
+</html>
