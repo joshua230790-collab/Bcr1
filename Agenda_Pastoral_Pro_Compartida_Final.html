@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agenda Pastoral Pro</title>
+  <script>
+    window.SUPABASE_URL = "https://htudsvaqtrnwalbdboxz.supabase.co";
+    window.SUPABASE_KEY = "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD";
+    window.USERS_TABLE = "app_users";
+    window.APPTS_TABLE = "agendas";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#0b1020; --bg2:#111833; --panel:rgba(18,26,54,.88); --card:rgba(255,255,255,.06);
+      --text:#eef2ff; --muted:#aab3d6; --line:#27315a; --primary:#8b5cf6;
+      --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; --shadow:0 18px 40px rgba(0,0,0,.30);
+    }
+    [data-theme="light"] {
+      --bg:#edf1ff; --bg2:#ffffff; --panel:rgba(255,255,255,.92); --card:rgba(255,255,255,.85);
+      --text:#10162b; --muted:#5b647f; --line:#d8def3; --shadow:0 18px 35px rgba(31,41,55,.10);
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; }
+    body {
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(139,92,246,.18), transparent 24%),
+        radial-gradient(circle at top right, rgba(245,158,11,.13), transparent 22%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+    }
+    button,input,select,textarea { font:inherit; }
+    .hidden { display:none !important; }
+    .login {
+      min-height:100vh; display:grid; place-items:center; padding:24px;
+    }
+    .login-card {
+      width:min(1180px,100%);
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+    }
+    .hero,.panel,.card,.topbar,.sidebar {
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+    }
+    [data-theme="light"] .hero, [data-theme="light"] .panel, [data-theme="light"] .card {
+      background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
+    }
+    .hero { padding:28px; position:relative; overflow:hidden; }
+    .hero::after {
+      content:""; position:absolute; inset:auto -20% -30% auto;
+      width:360px; height:360px;
+      background:radial-gradient(circle, rgba(139,92,246,.32), transparent 60%);
+    }
+    .brand-badge {
+      display:inline-flex; align-items:center; gap:10px; padding:10px 14px;
+      border-radius:999px; background:rgba(139,92,246,.16);
+      border:1px solid rgba(139,92,246,.30); font-weight:700;
+    }
+    .logo {
+      width:44px; height:44px; border-radius:14px; display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--primary),#a78bfa); color:white; font-size:22px;
+      box-shadow:0 10px 20px rgba(139,92,246,.35);
+    }
+    .hero h1 {
+      font-size:clamp(2rem,4vw,4rem); line-height:1.04; margin:18px 0 12px; letter-spacing:-.04em;
+    }
+    .hero p { color:var(--muted); font-size:1.03rem; max-width:60ch; line-height:1.6; }
+    .hero-grid,.cred {
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:22px;
+    }
+    .feature,.chip {
+      padding:16px; border-radius:18px; background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    [data-theme="light"] .feature, [data-theme="light"] .chip { background:rgba(255,255,255,.8); }
+    .feature b,.chip b { display:block; margin-bottom:6px; }
+    .feature span,.chip span { color:var(--muted); font-size:.92rem; display:block; }
+    .panel { padding:22px; display:flex; flex-direction:column; justify-content:center; }
+    .panel h2 { margin:0 0 6px; font-size:1.55rem; }
+    .panel p { margin:0 0 18px; color:var(--muted); }
+    .form-grid { display:grid; gap:12px; }
+    .input,.select,textarea {
+      width:100%;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:14px 16px;
+      border-radius:16px;
+      outline:none;
+    }
+    [data-theme="light"] .input, [data-theme="light"] .select, [data-theme="light"] textarea { background:#fff; }
+    textarea { resize:vertical; min-height:96px; }
+    .input:focus,.select:focus,textarea:focus {
+      border-color:rgba(139,92,246,.65);
+      box-shadow:0 0 0 4px rgba(139,92,246,.12);
+    }
+    .btn {
+      border:none; cursor:pointer; border-radius:16px; padding:13px 16px;
+      background:linear-gradient(135deg,var(--primary),#a78bfa); color:white; font-weight:800;
+      transition:.18s transform, .18s opacity;
+    }
+    .btn:hover { transform:translateY(-1px); }
+    .btn.secondary {
+      background:transparent; color:var(--text); border:1px solid var(--line);
+    }
+    .btn.good { background:linear-gradient(135deg,#16a34a,#22c55e); }
+    .btn.warn { background:linear-gradient(135deg,#d97706,#f59e0b); }
+    .btn.bad { background:linear-gradient(135deg,#dc2626,#ef4444); }
+    .small { font-size:.9rem; color:var(--muted); }
+    .topbar {
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:16px 18px; border-radius:0; border-left:none; border-right:none;
+      background:linear-gradient(180deg, rgba(10,14,28,.84), rgba(10,14,28,.55));
+    }
+    [data-theme="light"] .topbar {
+      background:linear-gradient(180deg, rgba(237,241,255,.86), rgba(237,241,255,.58));
+      border-bottom:1px solid var(--line);
+    }
+    .top-left { display:flex; align-items:center; gap:12px; }
+    .app-title { display:flex; flex-direction:column; }
+    .app-title b { font-size:1.02rem; }
+    .app-title span { color:var(--muted); font-size:.86rem; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+
+    .layout { display:grid; grid-template-columns:250px 1fr; min-height:calc(100vh - 74px); }
+    .sidebar { padding:16px; border-radius:0; border-left:none; border-top:none; border-bottom:none; }
+    .nav { display:grid; gap:10px; position:sticky; top:90px; }
+    .nav button {
+      width:100%; text-align:left; padding:14px; border-radius:16px;
+      border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); cursor:pointer;
+      display:flex; align-items:center; gap:10px;
+    }
+    .nav button.active {
+      background:linear-gradient(135deg, rgba(139,92,246,.25), rgba(139,92,246,.11));
+      border-color:rgba(139,92,246,.4);
+    }
+    .content { padding:18px; max-width:1600px; width:100%; }
+    .page { display:none; }
+    .page.active { display:block; }
+    .grid-4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+    .grid-2 { display:grid; grid-template-columns:1.35fr .95fr; gap:14px; }
+    .card {
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    [data-theme="light"] .card { background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88)); }
+    .stat { display:flex; justify-content:space-between; align-items:flex-start; min-height:114px; }
+    .stat .num { font-size:2rem; font-weight:900; letter-spacing:-.04em; }
+    .muted { color:var(--muted); }
+    .pill {
+      display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:999px;
+      border:1px solid var(--line); color:var(--muted); font-size:.85rem; background:rgba(255,255,255,.03);
+    }
+    .calendar-head {
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      margin-bottom:12px; flex-wrap:wrap;
+    }
+    .calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:10px; }
+    .dow { text-align:center; color:var(--muted); font-size:.82rem; padding:6px 0; }
+    .day {
+      min-height:118px; padding:10px; border-radius:18px; background:rgba(255,255,255,.04);
+      border:1px solid var(--line); position:relative; cursor:pointer;
+    }
+    .day.muted-day { opacity:.35; }
+    .day.today { outline:2px solid rgba(139,92,246,.75); }
+    .day.selected { background:linear-gradient(180deg, rgba(139,92,246,.22), rgba(139,92,246,.10)); }
+    .day-num { font-weight:800; }
+    .dots { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
+    .dot { width:9px; height:9px; border-radius:999px; }
+    .dot.good { background:var(--good); } .dot.warn { background:var(--warn); } .dot.bad { background:var(--bad); } .dot.purple { background:var(--primary); }
+    .appt-list { display:grid; gap:10px; margin-top:12px; }
+    .appt {
+      padding:12px 12px 12px 14px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.04);
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+    }
+    .appt strong { display:block; }
+    .appt small { color:var(--muted); }
+    .tag {
+      display:inline-flex; padding:5px 9px; border-radius:999px; font-size:.78rem; font-weight:700; margin-left:6px;
+      border:1px solid transparent;
+    }
+    .tag.pending { color:#fef3c7; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.2); }
+    .tag.confirmed { color:#dcfce7; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.2); }
+    .tag.done { color:#dbeafe; background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.2); }
+    .tag.cancelled { color:#fee2e2; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.2); }
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+    .toolbar .input,.toolbar .select { max-width:260px; }
+    .table { width:100%; border-collapse:separate; border-spacing:0 10px; }
+    .table th { color:var(--muted); font-size:.8rem; text-align:left; font-weight:700; padding:0 10px; }
+    .table td { padding:14px 10px; background:rgba(255,255,255,.04); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .table tr td:first-child { border-left:1px solid var(--line); border-radius:16px 0 0 16px; }
+    .table tr td:last-child { border-right:1px solid var(--line); border-radius:0 16px 16px 0; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .mini { padding:9px 11px; border-radius:12px; font-size:.86rem; }
+    .toast-wrap { position:fixed; right:16px; bottom:16px; z-index:1000; display:grid; gap:10px; }
+    .toast {
+      min-width:280px; max-width:360px; background:rgba(17,24,51,.96); color:white; border:1px solid rgba(255,255,255,.08);
+      border-radius:16px; padding:14px 16px; box-shadow:var(--shadow);
+    }
+    .legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .legend span { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:.85rem; }
+    .kdot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+    .analytics { display:grid; gap:12px; }
+    .bar-row { display:grid; grid-template-columns:120px 1fr 54px; gap:12px; align-items:center; }
+    .bar { height:12px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; border:1px solid var(--line); }
+    .bar>div { height:100%; border-radius:inherit; background:linear-gradient(135deg,var(--primary),#c084fc); }
+    .switch { display:inline-flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.03); }
+    .switch input { transform:scale(1.1); }
+    .codebox {
+      width:100%; min-height:220px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-size:.82rem; white-space:pre; line-height:1.4;
+    }
+    .footer-note { color:var(--muted); font-size:.85rem; margin-top:10px; }
+
+    @media (max-width:1120px) {
+      .login-card { grid-template-columns:1fr; }
+      .layout { grid-template-columns:1fr; }
+      .sidebar { border-right:none; border-bottom:1px solid var(--line); }
+      .nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .grid-4,.grid-2,.hero-grid,.cred { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:760px) {
+      .grid-4,.grid-2,.hero-grid,.cred,.nav { grid-template-columns:1fr; }
+      .calendar { gap:7px; }
+      .day { min-height:92px; padding:8px; }
+      .topbar { padding:12px 14px; }
+      .content { padding:12px; }
+      .sidebar { padding:12px; }
+      .appt { flex-direction:column; }
+      .top-actions .btn { padding:11px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="login">
+    <div class="login-card">
+      <section class="hero">
+        <div class="brand-badge"><div class="logo">✦</div> Agenda Pastoral Pro</div>
+        <h1>Agenda compartida, sin correo de confirmación.</h1>
+        <p>Una sola app HTML para crear cuentas, iniciar sesión, administrar citas y ver disponibilidad desde cualquier teléfono.</p>
+        <div class="hero-grid">
+          <div class="feature"><b>Usuarios en Supabase</b><span>Las cuentas se guardan en la nube y sirven en todos los dispositivos.</span></div>
+          <div class="feature"><b>Citas en Supabase</b><span>La agenda también queda compartida entre teléfonos.</span></div>
+          <div class="feature"><b>Interfaz bonita</b><span>Diseño claro, moderno y adaptado al celular.</span></div>
+          <div class="feature"><b>Sin correo</b><span>No depende de confirmación de email ni de límites de correo.</span></div>
+        </div>
+        <div class="cred">
+          <div class="chip"><b>Cuenta demo</b><span>Crear nueva cuenta</span></div>
+          <div class="chip"><b>Base</b><span>app_users + agendas</span></div>
+          <div class="chip"><b>Clave</b><span>Hash SHA-256</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Entrar o crear cuenta</h2>
+        <p>Usá usuario y contraseña. Si no existe, la creás aquí mismo.</p>
+        <div class="form-grid">
+          <input id="fullName" class="input" type="text" placeholder="Nombre completo" autocomplete="name" />
+          <input id="username" class="input" type="text" placeholder="Usuario o correo" autocomplete="username" />
+          <input id="password" class="input" type="password" placeholder="Contraseña" autocomplete="current-password" />
+          <select id="role" class="select">
+            <option value="pastor">Pastor</option>
+            <option value="secretary">Secretaria</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <button class="btn" id="loginBtn" type="button">Ingresar</button>
+          <button class="btn secondary" id="registerBtn" type="button">Crear cuenta</button>
+          <div class="small">Ya no depende del correo. Todo queda guardado en la tabla <b>app_users</b>.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden" data-theme="dark">
+    <div class="topbar">
+      <div class="top-left">
+        <div class="logo">✦</div>
+        <div class="app-title"><b>Agenda Pastoral Pro</b><span id="welcomeText">Bienvenido</span></div>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary mini" id="themeBtn" type="button">🌙 Tema</button>
+        <button class="btn secondary mini" id="reloadBtn" type="button">↻ Recargar</button>
+        <button class="btn secondary mini" id="exportBtn" type="button">⬇ Exportar</button>
+        <label class="btn secondary mini" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer">
+          ⬆ Importar<input id="importFile" type="file" accept="application/json" class="hidden">
+        </label>
+        <button class="btn bad mini" id="logoutBtn" type="button">Salir</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="nav">
+          <button class="active" data-page="dashboard" type="button">🏠 Dashboard</button>
+          <button data-page="calendar" type="button">📅 Calendario</button>
+          <button data-page="appointments" type="button">📝 Citas</button>
+          <button data-page="users" type="button">👥 Usuarios</button>
+          <button data-page="settings" type="button">⚙️ Ajustes</button>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h4 style="margin:0 0 6px">Sesión activa</h4>
+          <div class="muted" id="sessionCard"></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px">
+            <span class="pill" id="rolePill">Rol</span>
+            <span class="pill" id="connPill">Supabase</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="dashboard" class="page active">
+          <div class="grid-4" id="statGrid"></div>
+          <div class="grid-2" style="margin-top:14px">
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Resumen de hoy</h3>
+                  <div class="muted" id="todayLabel"></div>
+                </div>
+                <div class="pill" id="nextLabel">Próxima cita</div>
+              </div>
+              <div id="todayAgenda" class="appt-list"></div>
+            </div>
+            <div class="card">
+              <h3>Actividad rápida</h3>
+              <div class="analytics" id="activityBars"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="calendar" class="page">
+          <div class="grid-2">
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Calendario</h3>
+                  <div class="muted">Tocá un día para ver y crear citas.</div>
+                </div>
+                <div class="toolbar" style="margin:0">
+                  <button class="btn secondary mini" id="prevMonth" type="button">◀</button>
+                  <button class="btn secondary mini" id="todayBtn" type="button">Hoy</button>
+                  <button class="btn secondary mini" id="nextMonth" type="button">▶</button>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+                <div>
+                  <b id="monthTitle"></b>
+                  <div class="legend">
+                    <span><i class="kdot" style="background:var(--good)"></i> Libre</span>
+                    <span><i class="kdot" style="background:var(--warn)"></i> Pendiente</span>
+                    <span><i class="kdot" style="background:var(--primary)"></i> Confirmada</span>
+                    <span><i class="kdot" style="background:var(--bad)"></i> Cancelada</span>
+                  </div>
+                </div>
+                <span class="pill" id="selectedDayPill"></span>
+              </div>
+              <div class="calendar" id="calendarGrid" style="margin-top:14px"></div>
+            </div>
+
+            <div class="card">
+              <div class="calendar-head">
+                <div>
+                  <h3 style="margin:0">Citas del día</h3>
+                  <div class="muted" id="selectedDayLabel"></div>
+                </div>
+                <span class="pill" id="dayCount">0 citas</span>
+              </div>
+              <div id="dayAppointments" class="appt-list"></div>
+              <hr style="border:none; border-top:1px solid var(--line); margin:16px 0">
+              <h4 style="margin-top:0">Nueva cita rápida</h4>
+              <div class="form-grid">
+                <input id="aName" class="input" placeholder="Nombre de la persona" />
+                <input id="aPhone" class="input" placeholder="Teléfono" />
+                <input id="aDate" class="input" type="date" />
+                <input id="aTime" class="input" type="time" />
+                <input id="aPastor" class="input" placeholder="Usuario del pastor (por ejemplo: pastora@iglesia.com)" />
+                <select id="aStatus" class="select">
+                  <option value="pending">Pendiente</option>
+                  <option value="confirmed">Confirmada</option>
+                  <option value="done">Realizada</option>
+                  <option value="cancelled">Cancelada</option>
+                </select>
+                <textarea id="aReason" class="input" rows="3" placeholder="Motivo / notas"></textarea>
+                <button class="btn good" id="saveApptBtn" type="button">Guardar cita</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="appointments" class="page">
+          <div class="card">
+            <div class="toolbar">
+              <input id="searchAppts" class="input" placeholder="Buscar por nombre, pastor, fecha o teléfono" />
+              <select id="filterStatus" class="select" style="max-width:210px">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="confirmed">Confirmadas</option>
+                <option value="done">Realizadas</option>
+                <option value="cancelled">Canceladas</option>
+              </select>
+              <button class="btn secondary mini" id="clearFilters" type="button">Limpiar</button>
+            </div>
+            <div style="overflow:auto">
+              <table class="table">
+                <thead>
+                  <tr><th>Persona</th><th>Fecha</th><th>Hora</th><th>Pastor</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="apptTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="users" class="page">
+          <div class="grid-2">
+            <div class="card">
+              <h3>Crear cuenta</h3>
+              <div class="form-grid">
+                <input id="uName" class="input" placeholder="Nombre completo" />
+                <input id="uUsername" class="input" placeholder="Usuario" />
+                <input id="uPass" class="input" type="password" placeholder="Contraseña" />
+                <select id="uRole" class="select">
+                  <option value="pastor">Pastor</option>
+                  <option value="secretary">Secretaria</option>
+                  <option value="admin">Administrador</option>
+                </select>
+                <button class="btn" id="createUserBtn" type="button">Crear usuario</button>
+              </div>
+              <p class="footer-note" id="userHint"></p>
+            </div>
+            <div class="card">
+              <h3>Usuarios registrados</h3>
+              <div id="usersList" class="appt-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings" class="page">
+          <div class="grid-2">
+            <div class="card">
+              <h3>Ajustes</h3>
+              <div class="form-grid">
+                <label class="switch"><input id="darkToggle" type="checkbox" /> Modo oscuro</label>
+                <label class="switch"><input id="compactToggle" type="checkbox" /> Vista compacta</label>
+                <label class="switch"><input id="demoToggle" type="checkbox" /> Cargar demo local</label>
+                <button class="btn warn" id="resetBtn" type="button">Borrar datos locales</button>
+              </div>
+              <p class="footer-note">Los usuarios y citas importantes se guardan en Supabase. El tema y esta sesión quedan locales en este dispositivo.</p>
+            </div>
+            <div class="card">
+              <h3>SQL de configuración</h3>
+              <textarea id="sqlBox" class="codebox" readonly></textarea>
+              <div class="footer-note">Ya deberías haber ejecutado este SQL una vez en Supabase.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+<script>
+(() => {
+  const TABLE = window.APPTS_TABLE || "agendas";
+  const USERS_TABLE = window.USERS_TABLE || "app_users";
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_KEY = window.SUPABASE_KEY;
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+
+  const SQL_SETUP = `create extension if not exists pgcrypto;
+
+create table if not exists public.app_users (
+    id uuid primary key default gen_random_uuid(),
+    username text unique not null,
+    full_name text not null,
+    role text not null default 'Pastor',
+    password_hash text not null,
+    created_at timestamptz default now()
+);
+
+alter table public.app_users enable row level security;
+
+drop policy if exists "read_users" on public.app_users;
+drop policy if exists "insert_users" on public.app_users;
+
+create policy "read_users"
+on public.app_users
+for select
+using (true);
+
+create policy "insert_users"
+on public.app_users
+for insert
+with check (true);
+
+create or replace function public.register_app_user(
+    p_username text,
+    p_full_name text,
+    p_password_hash text,
+    p_role text
+)
+returns json
+language plpgsql
+security definer
+as $$
+declare
+    u public.app_users;
+begin
+    insert into public.app_users(
+        username,
+        full_name,
+        password_hash,
+        role
+    )
+    values(
+        lower(trim(p_username)),
+        trim(p_full_name),
+        p_password_hash,
+        p_role
+    )
+    returning * into u;
+
+    return row_to_json(u);
+
+exception
+when unique_violation then
+    raise exception 'Ese usuario ya existe';
+end;
+$$;
+
+create or replace function public.login_app_user(
+    p_username text,
+    p_password_hash text
+)
+returns json
+language plpgsql
+security definer
+as $$
+declare
+    u public.app_users;
+begin
+    select *
+    into u
+    from public.app_users
+    where username = lower(trim(p_username))
+      and password_hash = p_password_hash;
+
+    if not found then
+        return null;
+    end if;
+
+    return row_to_json(u);
+end;
+$$;
+
+create or replace function public.list_app_users()
+returns setof public.app_users
+language sql
+security definer
+as $$
+select *
+from public.app_users
+order by created_at;
+$$;
+
+grant execute on function public.register_app_user(text,text,text,text) to anon,authenticated;
+grant execute on function public.login_app_user(text,text) to anon,authenticated;
+grant execute on function public.list_app_users() to anon,authenticated;
+
+alter table public.agendas enable row level security;
+
+drop policy if exists "agenda_select" on public.agendas;
+drop policy if exists "agenda_insert" on public.agendas;
+drop policy if exists "agenda_update" on public.agendas;
+drop policy if exists "agenda_delete" on public.agendas;
+
+create policy "agenda_select"
+on public.agendas
+for select
+using (true);
+
+create policy "agenda_insert"
+on public.agendas
+for insert
+with check (true);
+
+create policy "agenda_update"
+on public.agendas
+for update
+using (true);
+
+create policy "agenda_delete"
+on public.agendas
+for delete
+using (true);`;
+
+  const $ = (s, p=document) => p.querySelector(s);
+  const $$ = (s, p=document) => [...p.querySelectorAll(s)];
+
+  const loginView = $("#loginView");
+  const appView = $("#appView");
+  const welcomeText = $("#welcomeText");
+  const sessionCard = $("#sessionCard");
+  const rolePill = $("#rolePill");
+  const connPill = $("#connPill");
+  const statGrid = $("#statGrid");
+  const todayAgenda = $("#todayAgenda");
+  const activityBars = $("#activityBars");
+  const monthTitle = $("#monthTitle");
+  const calendarGrid = $("#calendarGrid");
+  const selectedDayPill = $("#selectedDayPill");
+  const selectedDayLabel = $("#selectedDayLabel");
+  const dayAppointments = $("#dayAppointments");
+  const dayCount = $("#dayCount");
+  const apptTable = $("#apptTable");
+  const todayLabel = $("#todayLabel");
+  const nextLabel = $("#nextLabel");
+  const usersList = $("#usersList");
+  const userHint = $("#userHint");
+  const sqlBox = $("#sqlBox");
+
+  const statusText = { pending:"Pendiente", confirmed:"Confirmada", done:"Realizada", cancelled:"Cancelada" };
+  const state = {
+    users: [],
+    appointments: [],
+    session: loadJSON("agenda_session_v3", null),
+    currentMonth: new Date().getMonth(),
+    currentYear: new Date().getFullYear(),
+    selectedDate: todayISO(),
+    editingId: null,
+    compact: false,
+    dark: true,
+    demoLocal: false
+  };
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  function saveJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function addDaysISO(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    }[m]));
+  }
+  function toast(title, msg) {
+    const wrap = $("#toasts");
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.innerHTML = `<strong>${escapeHtml(title)}</strong><div class="muted" style="color:#dbeafe;margin-top:4px">${escapeHtml(msg)}</div>`;
+    wrap.appendChild(el);
+    setTimeout(() => { el.style.opacity = "0"; el.style.transform = "translateY(8px)"; }, 2600);
+    setTimeout(() => el.remove(), 3100);
+  }
+  async function sha256(text) {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  function roleLabel(role) {
+    return role === "admin" ? "Administrador" : role === "secretary" ? "Secretaria" : "Pastor";
+  }
+  function fmtDate(iso) {
+    return new Date(iso + "T00:00:00").toLocaleDateString("es-CR", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  }
+  function fmtShortDate(iso) {
+    return new Date(iso + "T00:00:00").toLocaleDateString("es-CR", { day:"2-digit", month:"short" });
+  }
+  function monthTitleText(y,m) {
+    return new Date(y, m, 1).toLocaleDateString("es-CR", { month:"long", year:"numeric" });
+  }
+  function startOfMonthGrid(y,m) {
+    const first = new Date(y, m, 1);
+    const day = (first.getDay() + 6) % 7;
+    return new Date(y, m, 1 - day);
+  }
+  function getStatusColor(status) {
+    if (status === "confirmed") return "purple";
+    if (status === "done") return "good";
+    if (status === "cancelled") return "bad";
+    return "warn";
+  }
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", state.dark ? "dark" : "light");
+    $("#darkToggle").checked = state.dark;
+  }
+  function applyCompact() {
+    $("#compactToggle").checked = state.compact;
+    appView.style.fontSize = state.compact ? "14px" : "16px";
+  }
+  function currentUser() {
+    return state.session ? state.users.find(u => u.username.toLowerCase() === state.session.username.toLowerCase()) : null;
+  }
+  function currentName() {
+    const u = currentUser();
+    return u?.full_name || state.session?.full_name || "Usuario";
+  }
+  function currentRole() {
+    const u = currentUser();
+    return u?.role || state.session?.role || "pastor";
+  }
+  function appointmentsOn(date) {
+    return state.appointments.filter(a => a.fecha === date).sort((a,b) => a.hora.localeCompare(b.hora));
+  }
+  function showLogin() {
+    loginView.classList.remove("hidden");
+    appView.classList.add("hidden");
+  }
+  function showApp() {
+    loginView.classList.add("hidden");
+    appView.classList.remove("hidden");
+  }
+  function userByUsername(username) {
+    return state.users.find(u => String(u.username || "").toLowerCase().trim() === String(username || "").toLowerCase().trim()) || null;
+  }
+  function normalizeUser(user) {
+    if (!user) return null;
+    return {
+      id: user.id,
+      username: String(user.username || "").toLowerCase().trim(),
+      full_name: user.full_name || user.username || "Usuario",
+      role: user.role || "pastor",
+      password_hash: user.password_hash || "",
+      created_at: user.created_at || new Date().toISOString()
+    };
+  }
+
+  async function loadUsers() {
+    const { data, error } = await supabase.rpc("list_app_users");
+    if (error) throw error;
+    state.users = (data || []).map(normalizeUser);
+    return state.users;
+  }
+  async function loadAppointments() {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("*")
+      .order("fecha", { ascending: true })
+      .order("hora", { ascending: true });
+    if (error) throw error;
+    state.appointments = data || [];
+    connPill.textContent = `Supabase • ${state.appointments.length} cita(s)`;
+    return state.appointments;
+  }
+
+  async function registerAccount() {
+    const full_name = $("#fullName").value.trim();
+    const username = $("#username").value.trim().toLowerCase();
+    const password = $("#password").value.trim();
+    const role = $("#role").value;
+
+    if (!full_name || !username || !password) {
+      toast("Faltan datos", "Completá nombre, usuario y contraseña.");
+      return;
+    }
+
+    await loadUsers();
+    if (state.users.some(u => u.username.toLowerCase() === username)) {
+      toast("Usuario usado", "Ese usuario ya existe.");
+      return;
+    }
+
+    const password_hash = await sha256(password);
+    const { data, error } = await supabase.rpc("register_app_user", {
+      p_username: username,
+      p_full_name: full_name,
+      p_password_hash: password_hash,
+      p_role: role
+    });
+    if (error) {
+      toast("No se pudo crear", error.message);
+      return;
+    }
+
+    const savedUser = normalizeUser(data);
+    state.users.push(savedUser);
+    state.session = { username: savedUser.username, full_name: savedUser.full_name, role: savedUser.role };
+    saveJSON("agenda_session_v3", state.session);
+    await loadAppointments();
+    showApp();
+    renderAll();
+    toast("Cuenta creada", "Ya podés entrar desde este u otro teléfono.");
+  }
+
+  async function loginAccount() {
+    const username = $("#username").value.trim().toLowerCase();
+    const password = $("#password").value.trim();
+
+    if (!username || !password) {
+      toast("Faltan datos", "Completá usuario y contraseña.");
+      return;
+    }
+
+    await loadUsers();
+    const password_hash = await sha256(password);
+    const { data, error } = await supabase.rpc("login_app_user", {
+      p_username: username,
+      p_password_hash: password_hash
+    });
+    if (error) {
+      toast("No se pudo entrar", error.message);
+      return;
+    }
+    const user = normalizeUser(data);
+    if (!user) {
+      toast("No se pudo entrar", "Revisá usuario y contraseña.");
+      return;
+    }
+
+    state.session = { username: user.username, full_name: user.full_name, role: user.role };
+    saveJSON("agenda_session_v3", state.session);
+    await loadAppointments();
+    showApp();
+    renderAll();
+    toast("Sesión iniciada", "Bienvenido.");
+  }
+
+  function logout() {
+    state.session = null;
+    state.editingId = null;
+    localStorage.removeItem("agenda_session_v3");
+    showLogin();
+  }
+
+  async function saveAppointment() {
+    const nombre = $("#aName").value.trim();
+    const telefono = $("#aPhone").value.trim();
+    const fecha = $("#aDate").value;
+    const hora = $("#aTime").value;
+    const pastor = $("#aPastor").value.trim().toLowerCase();
+    const estado = $("#aStatus").value;
+    const motivo = $("#aReason").value.trim();
+
+    if (!nombre || !fecha || !hora || !pastor) {
+      toast("Faltan datos", "Completá nombre, fecha, hora y pastor.");
+      return;
+    }
+
+    const conflict = state.appointments.find(a => a.fecha === fecha && a.hora === hora && String(a.pastor || "").toLowerCase() === pastor && a.id !== state.editingId);
+    if (conflict) {
+      toast("Horario ocupado", "Ese pastor ya tiene una cita a esa hora.");
+      return;
+    }
+
+    const payload = {
+      nombre,
+      telefono,
+      fecha,
+      hora,
+      motivo,
+      pastor,
+      estado
+    };
+
+    if (state.editingId) {
+      const { error } = await supabase.from(TABLE).update(payload).eq("id", state.editingId);
+      if (error) {
+        toast("Error", error.message);
+        return;
+      }
+      state.editingId = null;
+      $("#saveApptBtn").textContent = "Guardar cita";
+      toast("Cita actualizada", "Los cambios se guardaron.");
+    } else {
+      const { error } = await supabase.from(TABLE).insert(payload);
+      if (error) {
+        toast("Error", error.message);
+        return;
+      }
+      toast("Cita guardada", "Se agregó a la agenda.");
+    }
+
+    $("#aName").value = "";
+    $("#aPhone").value = "";
+    $("#aReason").value = "";
+    state.selectedDate = fecha;
+    state.currentMonth = new Date(fecha + "T00:00:00").getMonth();
+    state.currentYear = new Date(fecha + "T00:00:00").getFullYear();
+    await loadAppointments();
+    renderAll();
+  }
+
+  window.editAppointment = function(id) {
+    const a = state.appointments.find(x => x.id === id);
+    if (!a) return;
+    state.editingId = id;
+    $("#aName").value = a.nombre || "";
+    $("#aPhone").value = a.telefono || "";
+    $("#aDate").value = a.fecha || todayISO();
+    $("#aTime").value = a.hora || "09:00";
+    $("#aPastor").value = a.pastor || "";
+    $("#aStatus").value = a.estado || "pending";
+    $("#aReason").value = a.motivo || "";
+    $("#saveApptBtn").textContent = "Actualizar cita";
+    state.selectedDate = a.fecha || todayISO();
+    state.currentMonth = new Date(state.selectedDate + "T00:00:00").getMonth();
+    state.currentYear = new Date(state.selectedDate + "T00:00:00").getFullYear();
+    renderCalendar();
+    $("#calendar").scrollIntoView({ behavior:"smooth" });
+  };
+
+  window.deleteAppointment = async function(id) {
+    const a = state.appointments.find(x => x.id === id);
+    if (!a) return;
+    if (!confirm(`Borrar cita de ${a.nombre}?`)) return;
+    const { error } = await supabase.from(TABLE).delete().eq("id", id);
+    if (error) {
+      toast("Error", error.message);
+      return;
+    }
+    await loadAppointments();
+    renderAll();
+    toast("Cita borrada", "Se eliminó de la agenda.");
+  };
+
+  function renderApptCard(a) {
+    const pastor = userByUsername(a.pastor);
+    return `
+      <div class="appt">
+        <div>
+          <strong>${escapeHtml(a.nombre)} <span class="tag ${a.estado}">${statusText[a.estado] || a.estado}</span></strong>
+          <small>🕒 ${escapeHtml(a.hora)} • 👤 ${escapeHtml(pastor?.full_name || a.pastor || "Sin pastor")}</small><br>
+          <small>📞 ${escapeHtml(a.telefono || "Sin teléfono")} • 📅 ${escapeHtml(a.fecha)}</small><br>
+          <small>${escapeHtml(a.motivo || "Sin motivo")}</small>
+        </div>
+        <div class="row-actions">
+          <button class="btn secondary mini" onclick="window.editAppointment('${a.id}')" type="button">Editar</button>
+          <button class="btn bad mini" onclick="window.deleteAppointment('${a.id}')" type="button">Borrar</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDashboard() {
+    const total = state.appointments.length;
+    const pending = state.appointments.filter(a => a.estado === "pending").length;
+    const confirmed = state.appointments.filter(a => a.estado === "confirmed").length;
+    const done = state.appointments.filter(a => a.estado === "done").length;
+    const cards = [
+      { label:"Citas totales", value: total, meta:"Guardadas en Supabase", icon:"📋" },
+      { label:"Pendientes", value: pending, meta:"Esperando revisión", icon:"⏳" },
+      { label:"Confirmadas", value: confirmed, meta:"Horarios ocupados", icon:"✅" },
+      { label:"Realizadas", value: done, meta:"Atendidas", icon:"🏁" },
+    ];
+    statGrid.innerHTML = cards.map(c => `
+      <div class="card stat">
+        <div>
+          <div class="pill">${c.icon} ${escapeHtml(c.label)}</div>
+          <div class="num">${c.value}</div>
+          <div class="muted">${escapeHtml(c.meta)}</div>
+        </div>
+      </div>
+    `).join("");
+
+    const todayA = appointmentsOn(todayISO());
+    todayLabel.textContent = fmtDate(todayISO());
+    todayAgenda.innerHTML = todayA.length ? todayA.slice(0,4).map(renderApptCard).join("") : `<div class="muted">No hay citas para hoy.</div>`;
+    const next = state.appointments.filter(a => a.fecha >= todayISO() && a.estado !== "cancelled").sort((a,b) => (a.fecha+a.hora).localeCompare(b.fecha+b.hora))[0];
+    nextLabel.textContent = next ? `Siguiente: ${next.fecha} ${next.hora}` : "Sin citas próximas";
+
+    const statusCounts = [
+      ["pending", pending],
+      ["confirmed", confirmed],
+      ["done", done],
+      ["cancelled", state.appointments.filter(a => a.estado === "cancelled").length]
+    ];
+    const max = Math.max(1, ...statusCounts.map(([,n]) => n));
+    activityBars.innerHTML = statusCounts.map(([st, n]) => `
+      <div class="bar-row">
+        <div>${statusText[st]}</div>
+        <div class="bar"><div style="width:${(n/max*100).toFixed(1)}%"></div></div>
+        <div style="text-align:right">${n}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderCalendar() {
+    monthTitle.textContent = monthTitleText(state.currentYear, state.currentMonth);
+    selectedDayPill.textContent = fmtShortDate(state.selectedDate);
+    selectedDayLabel.textContent = fmtDate(state.selectedDate);
+
+    const monthStart = startOfMonthGrid(state.currentYear, state.currentMonth);
+    const days = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+    calendarGrid.innerHTML = days.map(d => `<div class="dow">${d}</div>`).join("");
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(monthStart);
+      d.setDate(monthStart.getDate() + i);
+      const iso = d.toISOString().slice(0,10);
+      const inMonth = d.getMonth() === state.currentMonth;
+      const today = iso === todayISO();
+      const selected = iso === state.selectedDate;
+      const list = appointmentsOn(iso);
+      const dots = list.slice(0,4).map(a => `<span class="dot ${getStatusColor(a.estado)}"></span>`).join("");
+      calendarGrid.innerHTML += `
+        <div class="day ${inMonth ? "" : "muted-day"} ${today ? "today" : ""} ${selected ? "selected" : ""}" data-date="${iso}">
+          <div class="day-num">${d.getDate()}</div>
+          <div class="dots">${dots}</div>
+          <div class="mini-note">${list.length ? list.length + " cita(s)" : "Libre"}</div>
+        </div>
+      `;
+    }
+    $("#aDate").value = state.selectedDate;
+    renderSelectedDay();
+  }
+
+  function renderSelectedDay() {
+    const dayA = appointmentsOn(state.selectedDate);
+    dayCount.textContent = `${dayA.length} cita(s)`;
+    dayAppointments.innerHTML = dayA.length ? dayA.map(renderApptCard).join("") : `<div class="muted">Ese día está libre.</div>`;
+  }
+
+  function renderAppointmentsTable() {
+    const q = $("#searchAppts").value.trim().toLowerCase();
+    const s = $("#filterStatus").value;
+    const list = state.appointments
+      .filter(a => !s || a.estado === s)
+      .filter(a => !q || [a.nombre, a.telefono, a.fecha, a.hora, a.pastor, a.motivo].join(" ").toLowerCase().includes(q))
+      .sort((a,b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
+
+    apptTable.innerHTML = list.map(a => `
+      <tr>
+        <td><strong>${escapeHtml(a.nombre)}</strong><div class="muted">${escapeHtml(a.telefono || "")}</div></td>
+        <td>${escapeHtml(a.fecha)}</td>
+        <td>${escapeHtml(a.hora)}</td>
+        <td>${escapeHtml(userByUsername(a.pastor)?.full_name || a.pastor || "")}</td>
+        <td><span class="tag ${a.estado}">${statusText[a.estado] || a.estado}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn secondary mini" onclick="window.editAppointment('${a.id}')" type="button">Editar</button>
+            <button class="btn bad mini" onclick="window.deleteAppointment('${a.id}')" type="button">Borrar</button>
+          </div>
+        </td>
+      </tr>
+    `).join("") || `<tr><td colspan="6" class="muted" style="padding:20px 10px">No hay resultados.</td></tr>`;
+  }
+
+  function renderUsers() {
+    usersList.innerHTML = state.users.map(u => `
+      <div class="appt">
+        <div>
+          <strong>${escapeHtml(u.full_name)}</strong>
+          <div class="muted">@${escapeHtml(u.username)}</div>
+          <div class="muted">${escapeHtml(roleLabel(u.role))}</div>
+        </div>
+        <div class="row-actions">
+          <span class="pill">${escapeHtml(roleLabel(u.role))}</span>
+        </div>
+      </div>
+    `).join("") || `<div class="muted">No hay usuarios todavía.</div>`;
+  }
+
+  function renderTop() {
+    const u = currentUser() || state.session || {};
+    welcomeText.textContent = `${u.full_name || u.username || "Usuario"} • ${roleLabel(u.role || "pastor")}`;
+    sessionCard.innerHTML = `
+      <strong>${escapeHtml(u.full_name || "Sin nombre")}</strong><br>
+      <span>${escapeHtml(u.username || "")}</span><br>
+      <span>${escapeHtml(roleLabel(u.role || "pastor"))}</span>
+    `;
+    rolePill.textContent = `Rol: ${roleLabel(u.role || "pastor")}`;
+    connPill.textContent = "Conectado a Supabase";
+    const canCreate = (u.role === "admin" || u.role === "secretary");
+    $("#createUserBtn").disabled = !canCreate;
+    $("#createUserBtn").style.opacity = canCreate ? "1" : ".5";
+    userHint.textContent = canCreate
+      ? "Podés crear usuarios y administrar la agenda."
+      : "Podés crear citas y ver la agenda compartida.";
+  }
+
+  function renderAll() {
+    renderTop();
+    renderDashboard();
+    renderCalendar();
+    renderAppointmentsTable();
+    renderUsers();
+    $("#darkToggle").checked = state.dark;
+    $("#compactToggle").checked = state.compact;
+    $("#demoToggle").checked = state.demoLocal;
+    appView.style.fontSize = state.compact ? "14px" : "16px";
+  }
+
+  async function createUserFromPanel() {
+    const me = currentUser() || state.session || {};
+    if (!(me.role === "admin" || me.role === "secretary")) {
+      toast("Sin permiso", "Solo admin o secretaria pueden crear cuentas aquí.");
+      return;
+    }
+
+    const full_name = $("#uName").value.trim();
+    const username = $("#uUsername").value.trim().toLowerCase();
+    const password = $("#uPass").value.trim();
+    const role = $("#uRole").value;
+
+    if (!full_name || !username || !password) {
+      toast("Faltan datos", "Completá nombre, usuario y contraseña.");
+      return;
+    }
+
+    await loadUsers();
+    if (state.users.some(u => u.username.toLowerCase() === username)) {
+      toast("Usuario usado", "Ese usuario ya existe.");
+      return;
+    }
+
+    const password_hash = await sha256(password);
+    const { data, error } = await supabase.rpc("register_app_user", {
+      p_username: username,
+      p_full_name: full_name,
+      p_password_hash: password_hash,
+      p_role: role
+    });
+    if (error) {
+      toast("No se pudo crear", error.message);
+      return;
+    }
+
+    const savedUser = normalizeUser(data);
+    state.users.push(savedUser);
+    $("#uName").value = "";
+    $("#uUsername").value = "";
+    $("#uPass").value = "";
+    renderAll();
+    toast("Usuario creado", `${savedUser.full_name} ya puede iniciar sesión.`);
+  }
+
+  function exportData() {
+    const data = {
+      users: state.users,
+      appointments: state.appointments,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "agenda-pastoral-backup.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    toast("Exportado", "Se descargó el respaldo JSON.");
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !data.users || !data.appointments) {
+          toast("Archivo inválido", "Ese JSON no parece ser un respaldo válido.");
+          return;
+        }
+        // Importa solo como respaldo local; no toca la nube.
+        state.users = data.users.map(normalizeUser);
+        state.appointments = data.appointments;
+        toast("Importado", "El respaldo se cargó en este dispositivo.");
+        renderAll();
+      } catch {
+        toast("Error", "No se pudo leer el archivo.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function reloadAll() {
+    try {
+      await loadUsers();
+      await loadAppointments();
+      renderAll();
+      toast("Actualizado", "Se recargaron los datos.");
+    } catch (e) {
+      toast("Error", e.message || "No se pudo recargar.");
+    }
+  }
+
+  function bootstrapLocalSettings() {
+    state.dark = localStorage.getItem("agenda_theme_v3") !== "light";
+    state.compact = localStorage.getItem("agenda_compact_v3") === "1";
+    state.demoLocal = localStorage.getItem("agenda_demo_v3") === "1";
+    applyTheme();
+    applyCompact();
+    sqlBox.value = SQL_SETUP;
+    $("#aDate").value = todayISO();
+    $("#aTime").value = "09:00";
+    state.selectedDate = todayISO();
+  }
+
+  async function bootstrap() {
+    if (!window.supabase || !window.supabase.createClient) {
+      toast("Supabase no cargó", "Revisá la conexión a internet.");
+      showLogin();
+      return;
+    }
+    bootstrapLocalSettings();
+
+    try {
+      await loadUsers();
+      const saved = loadJSON("agenda_session_v3", null);
+      state.session = saved && state.users.some(u => u.username.toLowerCase() === saved.username?.toLowerCase?.()) ? saved : null;
+
+      if (state.session) {
+        await loadAppointments();
+        showApp();
+      } else {
+        showLogin();
+      }
+      renderAll();
+    } catch (err) {
+      toast("Error", err.message || "No se pudo iniciar.");
+      showLogin();
+    }
+  }
+
+  $("#loginBtn").addEventListener("click", loginAccount);
+  $("#registerBtn").addEventListener("click", registerAccount);
+  $("#logoutBtn").addEventListener("click", logout);
+  $("#themeBtn").addEventListener("click", () => {
+    state.dark = !state.dark;
+    localStorage.setItem("agenda_theme_v3", state.dark ? "dark" : "light");
+    applyTheme();
+  });
+  $("#reloadBtn").addEventListener("click", reloadAll);
+  $("#exportBtn").addEventListener("click", exportData);
+  $("#importFile").addEventListener("change", e => e.target.files[0] && importData(e.target.files[0]));
+  $("#saveApptBtn").addEventListener("click", saveAppointment);
+  $("#createUserBtn").addEventListener("click", createUserFromPanel);
+
+  $("#prevMonth").addEventListener("click", () => {
+    state.currentMonth--;
+    if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
+    renderCalendar();
+  });
+  $("#nextMonth").addEventListener("click", () => {
+    state.currentMonth++;
+    if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
+    renderCalendar();
+  });
+  $("#todayBtn").addEventListener("click", () => {
+    state.selectedDate = todayISO();
+    const t = new Date();
+    state.currentMonth = t.getMonth();
+    state.currentYear = t.getFullYear();
+    renderAll();
+  });
+  $("#aDate").addEventListener("change", e => {
+    state.selectedDate = e.target.value || todayISO();
+    const d = new Date(state.selectedDate + "T00:00:00");
+    state.currentMonth = d.getMonth();
+    state.currentYear = d.getFullYear();
+    renderCalendar();
+  });
+  $("#searchAppts").addEventListener("input", renderAppointmentsTable);
+  $("#filterStatus").addEventListener("change", renderAppointmentsTable);
+  $("#clearFilters").addEventListener("click", () => {
+    $("#searchAppts").value = "";
+    $("#filterStatus").value = "";
+    renderAppointmentsTable();
+  });
+  $("#darkToggle").addEventListener("change", e => {
+    state.dark = e.target.checked;
+    localStorage.setItem("agenda_theme_v3", state.dark ? "dark" : "light");
+    applyTheme();
+  });
+  $("#compactToggle").addEventListener("change", e => {
+    state.compact = e.target.checked;
+    localStorage.setItem("agenda_compact_v3", state.compact ? "1" : "0");
+    applyCompact();
+  });
+  $("#demoToggle").addEventListener("change", e => {
+    state.demoLocal = e.target.checked;
+    localStorage.setItem("agenda_demo_v3", state.demoLocal ? "1" : "0");
+  });
+  $("#resetBtn").addEventListener("click", () => {
+    if (!confirm("Borrar los datos locales de este dispositivo?")) return;
+    localStorage.removeItem("agenda_session_v3");
+    localStorage.removeItem("agenda_theme_v3");
+    localStorage.removeItem("agenda_compact_v3");
+    localStorage.removeItem("agenda_demo_v3");
+    state.session = null;
+    state.editingId = null;
+    showLogin();
+    bootstrap();
+    toast("Datos borrados", "Se limpió la sesión local.");
+  });
+
+  $$(".nav button").forEach(btn => btn.addEventListener("click", () => {
+    $$(".nav button").forEach(b => b.classList.toggle("active", b === btn));
+    $$(".page").forEach(p => p.classList.toggle("active", p.id === btn.dataset.page));
+  }));
+
+  calendarGrid.addEventListener("click", e => {
+    const el = e.target.closest(".day");
+    if (!el) return;
+    state.selectedDate = el.dataset.date;
+    $("#aDate").value = state.selectedDate;
+    renderCalendar();
+  });
+
+  $("#username").addEventListener("keydown", e => { if (e.key === "Enter") loginAccount(); });
+  $("#password").addEventListener("keydown", e => { if (e.key === "Enter") loginAccount(); });
+
+  bootstrap();
+})();
+</script>
+</body>
+</html>
