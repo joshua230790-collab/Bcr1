@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buseta Iglesia - Administrador</title>
+  <style>
+    :root {
+      --bg:#0f1115; --card:#171b22; --text:#f5f7fb; --muted:#aab3c5;
+      --green:#22c55e; --red:#ef4444; --yellow:#f59e0b; --blue:#60a5fa; --border:#2a3140;
+      --shadow:0 16px 36px rgba(0,0,0,.35); --radius:22px;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:Arial,Helvetica,sans-serif; background:radial-gradient(circle at top, #222a3a 0%, var(--bg) 55%, #0a0c10 100%);
+      color:var(--text);
+    }
+    .wrap { max-width:1200px; margin:0 auto; padding:18px; }
+    .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+    h1 { margin:0; font-size:1.55rem; }
+    p { margin:0; color:var(--muted); }
+    .card { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .panel { padding:16px; }
+    .controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+    @media (max-width:700px) { .controls { grid-template-columns:1fr; } }
+    .grid { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; }
+    @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+    label { display:block; color:var(--muted); font-size:.9rem; margin-bottom:6px; }
+    select, input, button {
+      width:100%; border:1px solid var(--border); background:#0f131a; color:var(--text); border-radius:14px; padding:12px 13px; font-size:1rem; outline:none;
+    }
+    button { cursor:pointer; font-weight:700; }
+    button.primary { background:var(--blue); color:#08111f; border:none; }
+    button.success { background:var(--green); color:#08150d; border:none; }
+    button.danger { background:var(--red); color:#fff; border:none; }
+    button.warning { background:var(--yellow); color:#201400; border:none; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
+    @media (max-width:800px) { .stats { grid-template-columns:1fr 1fr; } }
+    @media (max-width:500px) { .stats { grid-template-columns:1fr; } }
+    .stat { padding:14px; border-radius:18px; background:rgba(255,255,255,.03); border:1px solid var(--border); }
+    .stat .num { font-size:1.35rem; font-weight:900; }
+    .stat .lbl { color:var(--muted); font-size:.9rem; }
+    .list { display:grid; gap:10px; margin-top:12px; }
+    .item { padding:12px; border-radius:18px; background:rgba(255,255,255,.03); border:1px solid var(--border); }
+    .item strong { display:block; margin-bottom:4px; }
+    .item span { display:block; color:var(--muted); font-size:.92rem; line-height:1.45; }
+    .actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; }
+    @media (max-width:700px) { .actions { grid-template-columns:1fr; } }
+    .badge { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px; font-size:.88rem; font-weight:700; }
+    .b-paid { background:rgba(34,197,94,.15); color:#7CFFAF; border:1px solid rgba(34,197,94,.25); }
+    .b-pending { background:rgba(245,158,11,.14); color:#ffd08a; border:1px solid rgba(245,158,11,.25); }
+    .hint { color:var(--muted); font-size:.92rem; line-height:1.45; }
+    .summary { white-space:pre-wrap; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:18px; padding:14px; line-height:1.55; color:var(--muted); }
+    .spacer { height:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Panel de Administrador — Buseta Iglesia</h1>
+        <p>Revisa reservas, confirma pagos y libera espacios por servicio.</p>
+      </div>
+      <div><button class="primary" id="refreshBtn">Actualizar</button></div>
+    </div>
+
+    <div class="card panel">
+      <div class="controls">
+        <div>
+          <label>Servicio</label>
+          <select id="serviceSelect"></select>
+        </div>
+        <div>
+          <label>Estado rápido</label>
+          <button class="warning" id="reloadServicesBtn">Revisar servicios</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card panel" style="margin:0;">
+          <h2 style="margin-top:0;">Resumen</h2>
+          <div class="stats">
+            <div class="stat"><div class="num" id="capNum">0</div><div class="lbl">Capacidad</div></div>
+            <div class="stat"><div class="num" id="occNum">0</div><div class="lbl">Ocupados</div></div>
+            <div class="stat"><div class="num" id="leftNum">0</div><div class="lbl">Disponibles</div></div>
+            <div class="stat"><div class="num" id="paidNum">0</div><div class="lbl">Pagados</div></div>
+          </div>
+          <div class="spacer"></div>
+          <div class="summary" id="serviceSummary">Selecciona un servicio.</div>
+        </div>
+
+        <div class="card panel" style="margin:0;">
+          <h2 style="margin-top:0;">Acciones rápidas</h2>
+          <div class="hint">SIMPE / WhatsApp: <strong>6088 4910</strong></div>
+          <div class="spacer"></div>
+          <div class="controls" style="margin-top:0;">
+            <div>
+              <label>Filtrar pagos</label>
+              <select id="filterStatus">
+                <option value="all">Todos</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="pagado">Pagados</option>
+              </select>
+            </div>
+            <div>
+              <label>Orden</label>
+              <select id="sortBy">
+                <option value="seat_number">Asiento</option>
+                <option value="created_at">Hora</option>
+                <option value="full_name">Nombre</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel" style="margin-top:16px;">
+        <h2 style="margin-top:0;">Reservas</h2>
+        <div class="list" id="reservationList"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const SUPABASE_URL = "https://htudsvaqtrnwalbdboxz.supabase.co/rest/v1";
+const SUPABASE_KEY = "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD";
+const $ = (id) => document.getElementById(id);
+const STATE = { services: [], currentServiceId: null };
+
+function headers() {
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Prefer':'return=representation'
+  };
+}
+
+async function get(path) {
+  const res = await fetch(`${SUPABASE_URL}${path}`, { headers: headers() });
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+async function patch(path, body) {
+  const res = await fetch(`${SUPABASE_URL}${path}`, {
+    method:'PATCH', headers: headers(), body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function toISODate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function nextWeekday(targetDayIndex) {
+  const today = new Date();
+  const result = new Date(today);
+  const current = today.getDay();
+  let delta = (targetDayIndex - current + 7) % 7;
+  if (delta === 0) delta = 7;
+  result.setDate(today.getDate() + delta);
+  result.setHours(0,0,0,0);
+  return result;
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+async function ensureService(dayLabel, dateObj, capacity) {
+  const service_date = toISODate(dateObj);
+  const existing = await get(`/buseta_services?service_date=eq.${service_date}&select=*`);
+  if(existing.length) return existing[0];
+  const inserted = await fetch(`${SUPABASE_URL}/buseta_services`, {
+    method:'POST',
+    headers: headers(),
+    body: JSON.stringify([{ service_date, service_day: dayLabel, capacity, is_active: true }])
+  });
+  if(!inserted.ok) throw new Error(await inserted.text());
+  return (await inserted.json())[0];
+}
+
+async function loadServices() {
+  const wednesday = await ensureService('miercoles', nextWeekday(3), 12);
+  const sunday = await ensureService('domingo', nextWeekday(0), 24);
+  STATE.services = [wednesday, sunday].sort((a,b)=>a.service_date.localeCompare(b.service_date));
+  const select = $('serviceSelect');
+  select.innerHTML = '';
+  STATE.services.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${capitalize(s.service_day)} · ${s.service_date} · ${s.capacity} cupos`;
+    select.appendChild(opt);
+  });
+  if(!STATE.currentServiceId && STATE.services.length) {
+    STATE.currentServiceId = STATE.services[0].id;
+    select.value = STATE.currentServiceId;
+  }
+}
+
+function currentService() {
+  return STATE.services.find(s => s.id === STATE.currentServiceId) || STATE.services[0];
+}
+
+async function loadReservations(serviceId) {
+  const sortBy = $('sortBy').value;
+  const filter = $('filterStatus').value;
+  let query = `/buseta_reservations?service_id=eq.${serviceId}&select=*`;
+  if(sortBy === 'seat_number') query += `&order=seat_number.asc`;
+  if(sortBy === 'created_at') query += `&order=created_at.desc`;
+  if(sortBy === 'full_name') query += `&order=full_name.asc`;
+  let rows = await get(query);
+  if(filter !== 'all') rows = rows.filter(r => r.payment_status === filter);
+  return rows;
+}
+
+function renderList(rows) {
+  const box = $('reservationList');
+  box.innerHTML = '';
+  if(!rows.length) {
+    box.innerHTML = '<div class="item"><strong>No hay reservas</strong><span>Este servicio todavía está libre o filtraste sin resultados.</span></div>';
+    return;
+  }
+  rows.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    const badgeClass = r.payment_status === 'pagado' ? 'b-paid' : 'b-pending';
+    const badgeText = r.payment_status === 'pagado' ? 'PAGADO' : 'PENDIENTE';
+    div.innerHTML = `
+      <strong>Asiento ${r.seat_number} — ${r.full_name}</strong>
+      <span><span class="badge ${badgeClass}">${badgeText}</span> &nbsp; ₡${Number(r.amount).toLocaleString('es-CR')} · ${r.payment_method.toUpperCase()}</span>
+      <span>Confirmado por admin: ${r.confirmed_by_admin ? 'Sí' : 'No'}</span>
+      <span>Creado: ${r.created_at ? new Date(r.created_at).toLocaleString('es-CR') : '-'}</span>
+    `;
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const payBtn = document.createElement('button');
+    payBtn.className = 'success';
+    payBtn.textContent = r.payment_status === 'pagado' ? 'Ya pagado' : 'Marcar pagado';
+    payBtn.onclick = () => markPaid(r.id);
+
+    const pendingBtn = document.createElement('button');
+    pendingBtn.className = 'warning';
+    pendingBtn.textContent = 'Pendiente';
+    pendingBtn.onclick = () => markPending(r.id);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger';
+    deleteBtn.textContent = 'Liberar';
+    deleteBtn.onclick = () => deleteReservation(r.id);
+
+    actions.appendChild(payBtn);
+    actions.appendChild(pendingBtn);
+    actions.appendChild(deleteBtn);
+    div.appendChild(actions);
+    box.appendChild(div);
+  });
+}
+
+async function refresh() {
+  const service = currentService();
+  if(!service) return;
+  const rows = await loadReservations(service.id);
+  const occupied = rows.length;
+  const paid = rows.filter(r => r.payment_status === 'pagado').length;
+  const left = Math.max(0, Number(service.capacity) - occupied);
+
+  $('capNum').textContent = service.capacity;
+  $('occNum').textContent = occupied;
+  $('leftNum').textContent = left;
+  $('paidNum').textContent = paid;
+  $('serviceSummary').textContent =
+`Servicio: ${capitalize(service.service_day)}
+Fecha: ${service.service_date}
+Capacidad: ${service.capacity}
+Ocupados: ${occupied}
+Disponibles: ${left}
+Pagados: ${paid}
+Pendientes: ${occupied - paid}`;
+
+  renderList(rows);
+  $('serviceSelect').value = service.id;
+}
+
+async function markPaid(id) {
+  try {
+    await patch(`/buseta_reservations?id=eq.${id}`, {
+      payment_status:'pagado',
+      confirmed_by_admin:true,
+      confirmed_at:new Date().toISOString()
+    });
+    await refresh();
+  } catch(err) {
+    console.error(err); alert('No se pudo marcar como pagado');
+  }
+}
+
+async function markPending(id) {
+  try {
+    await patch(`/buseta_reservations?id=eq.${id}`, {
+      payment_status:'pendiente',
+      confirmed_by_admin:false,
+      confirmed_at:null
+    });
+    await refresh();
+  } catch(err) {
+    console.error(err); alert('No se pudo marcar como pendiente');
+  }
+}
+
+async function deleteReservation(id) {
+  if(!confirm('¿Liberar este asiento?')) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/buseta_reservations?id=eq.${id}`, { method:'DELETE', headers: headers() });
+    if(!res.ok) throw new Error(await res.text());
+    await refresh();
+  } catch(err) {
+    console.error(err); alert('No se pudo liberar el asiento');
+  }
+}
+
+$('serviceSelect').addEventListener('change', async (e) => { STATE.currentServiceId = e.target.value; await refresh(); });
+$('filterStatus').addEventListener('change', refresh);
+$('sortBy').addEventListener('change', refresh);
+$('refreshBtn').addEventListener('click', refresh);
+$('reloadServicesBtn').addEventListener('click', async () => { await loadServices(); await refresh(); });
+
+async function init() {
+  try {
+    await loadServices();
+    await refresh();
+  } catch(err) {
+    console.error(err);
+    $('serviceSummary').textContent = 'Error cargando datos. Revisa la URL, la API key y las políticas de Supabase.';
+  }
+}
+init();
+</script>
+</body>
+</html>
