@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bola Musical</title>
+  <style>
+    :root{
+      --bg:#050505;
+      --panel: rgba(10,10,10,.78);
+      --text:#f4f4f4;
+      --muted:#b7b7b7;
+      --accent:#ffffff;
+      --danger:#ff3b3b;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      width:100%;
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      background: radial-gradient(circle at center, #111 0%, #050505 65%, #000 100%);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+    }
+    canvas{
+      display:block;
+      width:100vw;
+      height:100vh;
+      touch-action:none;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.03), rgba(255,255,255,0) 55%),
+        #000;
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background: linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.35));
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    .panel{
+      width:min(560px, 100%);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:28px;
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      padding:24px;
+    }
+    .title{
+      font-size:clamp(28px, 5vw, 44px);
+      line-height:1.02;
+      margin:0 0 10px;
+      font-weight:800;
+      letter-spacing:-0.04em;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.5;
+    }
+    .row{display:grid; gap:12px}
+    .filebox{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:16px;
+      border-radius:20px;
+      border:1px dashed rgba(255,255,255,.18);
+      background:rgba(255,255,255,.03);
+    }
+    label{
+      font-size:13px;
+      color:var(--muted);
+    }
+    input[type="file"]{
+      width:100%;
+      color:var(--text);
+    }
+    .buttons{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:14px 18px;
+      font-weight:700;
+      font-size:15px;
+      color:#000;
+      background:linear-gradient(180deg, #fff, #d9d9d9);
+      transition:transform .15s ease, filter .15s ease;
+    }
+    button:hover{transform:translateY(-1px); filter:brightness(1.05)}
+    button.secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .hint{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .topbar{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:14px;
+      z-index:5;
+      pointer-events:none;
+    }
+    .chip{
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+      min-width:160px;
+    }
+    .chip strong{font-size:14px}
+    .chip span{font-size:12px;color:var(--muted)}
+    .bar{
+      width:min(340px, 42vw);
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.10);
+      margin-top:2px;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(90deg, #fff, #9f9f9f);
+    }
+    .gameover{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:20;
+      background:rgba(0,0,0,.68);
+      padding:24px;
+    }
+    .gameover .panel{
+      text-align:center;
+      max-width:520px;
+    }
+    .big{
+      font-size:clamp(34px, 7vw, 62px);
+      margin:0 0 10px;
+      font-weight:900;
+      letter-spacing:-0.05em;
+    }
+    .msg{
+      color:var(--muted);
+      margin:0 0 18px;
+      line-height:1.5;
+    }
+    .kbd{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      font-size:12px;
+      margin:0 4px;
+    }
+    .footer{
+      position:fixed;
+      left:14px;
+      bottom:12px;
+      z-index:4;
+      color:rgba(255,255,255,.7);
+      font-size:12px;
+      background:rgba(0,0,0,.32);
+      border:1px solid rgba(255,255,255,.08);
+      padding:8px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(6px);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="topbar" id="hud" style="display:none;">
+    <div class="chip">
+      <strong id="songName">Sin canción</strong>
+      <span id="songTime">00:00 / 00:00</span>
+      <div class="bar"><i id="songBar"></i></div>
+    </div>
+    <div class="chip" style="text-align:right">
+      <strong id="ballStat">Bola: 18 px</strong>
+      <span id="bounceStat">Rebotes: 0</span>
+      <div class="bar"><i id="sizeBar"></i></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="startScreen">
+    <div class="panel">
+      <h1 class="title">Bola Musical</h1>
+      <p class="subtitle">
+        Sube tu MP3, empieza la partida y mira cómo la bola rebota y crece hasta que termine la canción o ya sea demasiado grande.
+      </p>
+
+      <div class="row">
+        <div class="filebox">
+          <label for="musicFile">Elige tu archivo de música (.mp3, .m4a, .wav, .ogg)</label>
+          <input id="musicFile" type="file" accept="audio/*" />
+        </div>
+
+        <div class="buttons">
+          <button id="startBtn">Empezar juego</button>
+          <button id="demoBtn" class="secondary">Probar con sonido local</button>
+        </div>
+      </div>
+
+      <div class="hint">
+        Tip: toca <span class="kbd">Empezar juego</span> después de elegir el audio. La música inicia con un toque de la pantalla para que el navegador la permita.
+      </div>
+    </div>
+  </div>
+
+  <div class="gameover" id="gameOver">
+    <div class="panel">
+      <h2 class="big" id="overTitle">Fin</h2>
+      <p class="msg" id="overMsg"></p>
+      <div class="buttons" style="justify-content:center">
+        <button id="restartBtn">Jugar otra vez</button>
+        <button id="closeBtn" class="secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Hecho para jugar en el navegador — sin instalar nada</div>
+
+  <audio id="audio" preload="auto"></audio>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const startScreen = document.getElementById('startScreen');
+    const gameOver = document.getElementById('gameOver');
+    const hud = document.getElementById('hud');
+    const musicFile = document.getElementById('musicFile');
+    const startBtn = document.getElementById('startBtn');
+    const demoBtn = document.getElementById('demoBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const closeBtn = document.getElementById('closeBtn');
+
+    const songName = document.getElementById('songName');
+    const songTime = document.getElementById('songTime');
+    const songBar = document.getElementById('songBar');
+    const ballStat = document.getElementById('ballStat');
+    const bounceStat = document.getElementById('bounceStat');
+    const sizeBar = document.getElementById('sizeBar');
+    const overTitle = document.getElementById('overTitle');
+    const overMsg = document.getElementById('overMsg');
+    const audio = document.getElementById('audio');
+
+    let W = 0, H = 0, DPR = 1;
+    let state = 'menu';
+    let raf = 0;
+    let fileUrl = null;
+
+    const arena = {
+      x: 0,
+      y: 0,
+      r: 240
+    };
+
+    const ball = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      r: 18,
+      baseR: 18
+    };
+
+    const gravity = 0.045;
+    const growthPerBounce = 2.5;
+    const maxRadius = 92;
+    let bounceCount = 0;
+    let flash = 0;
+    let particles = [];
+    let trail = [];
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+      arena.x = W / 2;
+      arena.y = H / 2;
+      arena.r = Math.min(W, H) * 0.36;
+      arena.r = Math.max(arena.r, 160);
+    }
+    window.addEventListener('resize', resize);
+
+    function resetGame() {
+      bounceCount = 0;
+      flash = 0;
+      particles = [];
+      trail = [];
+      ball.r = ball.baseR;
+      ball.x = arena.x;
+      ball.y = arena.y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.min(W, H) * 0.0055;
+      ball.vx = Math.cos(angle) * speed * 1.6;
+      ball.vy = Math.sin(angle) * speed * 1.2;
+
+      if (audio) {
+        audio.currentTime = 0;
+      }
+      updateHud();
+    }
+
+    function formatTime(t) {
+      if (!isFinite(t) || t < 0) t = 0;
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60);
+      return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function updateHud() {
+      ballStat.textContent = `Bola: ${Math.round(ball.r)} px`;
+      bounceStat.textContent = `Rebotes: ${bounceCount}`;
+      const duration = audio.duration || 0;
+      const current = audio.currentTime || 0;
+      songTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+      songBar.style.width = duration ? `${Math.min(100, (current / duration) * 100)}%` : '0%';
+      sizeBar.style.width = `${Math.min(100, (ball.r / maxRadius) * 100)}%`;
+    }
+
+    function spawnParticles(x, y, count = 14) {
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 1 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: 1,
+          decay: 0.018 + Math.random() * 0.018,
+          r: 1 + Math.random() * 2.2
+        });
+      }
+    }
+
+    function drawArena() {
+      ctx.save();
+      ctx.translate(arena.x, arena.y);
+
+      const grad = ctx.createRadialGradient(0, 0, arena.r * 0.7, 0, 0, arena.r * 1.06);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.7, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(1, flash > 0 ? 'rgba(255,70,70,.95)' : 'rgba(255,255,255,.90)');
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arena.r, 0, Math.PI * 2);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = flash > 0 ? 24 : 8;
+      ctx.shadowColor = flash > 0 ? 'rgba(255,40,40,.8)' : 'rgba(255,255,255,.15)';
+      ctx.stroke();
+
+      // decorative spikes
+      const spikeCount = 10;
+      for (let i = 0; i < spikeCount; i++) {
+        const ang = (i / spikeCount) * Math.PI * 2 - Math.PI / 2;
+        const x1 = Math.cos(ang) * arena.r;
+        const y1 = Math.sin(ang) * arena.r;
+        const x2 = Math.cos(ang) * (arena.r + 12);
+        const y2 = Math.sin(ang) * (arena.r + 12);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = i % 3 === 0 ? 'rgba(255,40,40,.95)' : 'rgba(255,255,255,.28)';
+        ctx.lineWidth = i % 3 === 0 ? 3 : 1.4;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawTrail() {
+      for (let i = 0; i < trail.length; i++) {
+        const p = trail[i];
+        const alpha = i / trail.length * 0.25;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, p.life)})`;
+        ctx.fill();
+      });
+    }
+
+    function updateParticles() {
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.vy += 0.02;
+        p.life -= p.decay;
+        p.r *= 0.992;
+      });
+      particles = particles.filter(p => p.life > 0);
+    }
+
+    function bounceOffArena() {
+      const dx = ball.x - arena.x;
+      const dy = ball.y - arena.y;
+      const dist = Math.hypot(dx, dy) || 0.0001;
+      const limit = arena.r - ball.r;
+      if (dist > limit) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        ball.x = arena.x + nx * limit;
+        ball.y = arena.y + ny * limit;
+
+        const dot = ball.vx * nx + ball.vy * ny;
+        ball.vx = ball.vx - 2 * dot * nx;
+        ball.vy = ball.vy - 2 * dot * ny;
+
+        // a little extra energy so the ball keeps moving
+        ball.vx *= 1.01;
+        ball.vy *= 1.01;
+
+        ball.r += growthPerBounce;
+        bounceCount++;
+        flash = 1;
+        spawnParticles(ball.x, ball.y, 18);
+
+        // tiny bounce feedback on the music
+        try {
+          audio.volume = 1;
+        } catch (e) {}
+      }
+    }
+
+    function endGame(reason) {
+      if (state !== 'running') return;
+      state = 'over';
+      cancelAnimationFrame(raf);
+      audio.pause();
+
+      overTitle.textContent = reason.title;
+      overMsg.textContent = reason.text;
+      gameOver.style.display = 'flex';
+      hud.style.display = 'none';
+    }
+
+    function loop() {
+      if (state !== 'running') return;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // soft background halo
+      const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.55);
+      bg.addColorStop(0, 'rgba(255,255,255,0.03)');
+      bg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      if (flash > 0) flash *= 0.93;
+      drawArena();
+
+      // physics
+      ball.vy += gravity;
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      // keep speed alive
+      const speed = Math.hypot(ball.vx, ball.vy);
+      const minSpeed = 1.2;
+      if (speed < minSpeed) {
+        ball.vx *= 1.03;
+        ball.vy *= 1.03;
+      }
+
+      bounceOffArena();
+
+      trail.push({ x: ball.x, y: ball.y, r: Math.max(1, ball.r * 0.08) });
+      if (trail.length > 28) trail.shift();
+
+      updateParticles();
+
+      drawTrail();
+      drawParticles();
+
+      // ball glow
+      ctx.save();
+      ctx.shadowBlur = 28 + flash * 34;
+      ctx.shadowColor = flash > 0 ? 'rgba(255,60,60,.9)' : 'rgba(255,255,255,.35)';
+      const ballGrad = ctx.createRadialGradient(ball.x - ball.r * 0.28, ball.y - ball.r * 0.28, ball.r * 0.2, ball.x, ball.y, ball.r);
+      ballGrad.addColorStop(0, '#ffffff');
+      ballGrad.addColorStop(0.7, '#f0f0f0');
+      ballGrad.addColorStop(1, '#cfcfcf');
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = ballGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // subtle reflection line
+      ctx.beginPath();
+      ctx.arc(ball.x - ball.r * 0.2, ball.y - ball.r * 0.2, Math.max(2, ball.r * 0.12), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.fill();
+
+      updateHud();
+
+      // lose conditions
+      if (ball.r >= maxRadius) {
+        endGame({
+          title: 'La bola creció demasiado',
+          text: 'La bola llegó al tamaño máximo. Puedes probar otra canción o reiniciar para intentar más rebotes.'
+        });
+        return;
+      }
+
+      if (audio.ended) {
+        endGame({
+          title: 'Terminó la canción',
+          text: `La canción acabó con ${bounceCount} rebotes.`
+        });
+        return;
+      }
+
+      // if audio paused unexpectedly, stop
+      if (audio.paused && audio.currentTime > 0 && !audio.ended) {
+        // leave it running visually, but don't auto-end
+      }
+
+      raf = requestAnimationFrame(loop);
+    }
+
+    async function startWithFile(file) {
+      if (!file) {
+        alert('Primero elige un MP3 o cualquier archivo de audio.');
+        return;
+      }
+
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+        fileUrl = null;
+      }
+
+      fileUrl = URL.createObjectURL(file);
+      audio.src = fileUrl;
+      audio.loop = false;
+      audio.preload = 'auto';
+      songName.textContent = file.name.replace(/\.[^.]+$/, '');
+      gameOver.style.display = 'none';
+      startScreen.style.display = 'none';
+      hud.style.display = 'flex';
+
+      resize();
+      resetGame();
+      state = 'running';
+
+      try {
+        await audio.play();
+      } catch (err) {
+        // if playback fails, keep game visible and ask the user to tap again
+        alert('El navegador bloqueó el audio. Vuelve a tocar Empezar juego.');
+        state = 'menu';
+        startScreen.style.display = 'flex';
+        hud.style.display = 'none';
+        return;
+      }
+
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function startDemo() {
+      // This uses a tiny generated WAV beeper if the user wants to test the game without uploading audio.
+      const sampleRate = 22050;
+      const duration = 3.5;
+      const freq = 440;
+      const samples = Math.floor(sampleRate * duration);
+      const buffer = new ArrayBuffer(44 + samples * 2);
+      const view = new DataView(buffer);
+
+      function writeString(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + samples * 2, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, samples * 2, true);
+
+      for (let i = 0; i < samples; i++) {
+        const t = i / sampleRate;
+        const env = Math.min(1, i / 1200) * Math.max(0, 1 - (i / samples));
+        const s = Math.sin(2 * Math.PI * freq * t) * env * 0.35;
+        view.setInt16(44 + i * 2, s * 32767, true);
+      }
+
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      const demoFile = new File([blob], 'demo.wav', { type: 'audio/wav' });
+      musicFile.value = '';
+      startWithFile(demoFile);
+    }
+
+    startBtn.addEventListener('click', () => startWithFile(musicFile.files[0]));
+    demoBtn.addEventListener('click', startDemo);
+
+    restartBtn.addEventListener('click', () => {
+      gameOver.style.display = 'none';
+      if (audio.src) {
+        audio.currentTime = 0;
+      }
+      if (musicFile.files[0]) {
+        startWithFile(musicFile.files[0]);
+      } else if (audio.src) {
+        // reuse current source if available
+        startScreen.style.display = 'none';
+        hud.style.display = 'flex';
+        resetGame();
+        state = 'running';
+        audio.play().catch(() => {});
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(loop);
+      } else {
+        startScreen.style.display = 'flex';
+        hud.style.display = 'none';
+        state = 'menu';
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      gameOver.style.display = 'none';
+      startScreen.style.display = 'flex';
+      hud.style.display = 'none';
+      state = 'menu';
+    });
+
+    audio.addEventListener('ended', () => {
+      if (state === 'running') {
+        endGame({
+          title: 'Terminó la canción',
+          text: `La canción acabó con ${bounceCount} rebotes.`
+        });
+      }
+    });
+
+    audio.addEventListener('timeupdate', updateHud);
+
+    // Click anywhere on the panel background to focus the file input quickly
+    startScreen.addEventListener('click', (e) => {
+      if (e.target === startScreen) {
+        musicFile.click();
+      }
+    });
+
+    // Init
+    resize();
+    resetGame();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    updateHud();
+  </script>
+</body>
+</html>
