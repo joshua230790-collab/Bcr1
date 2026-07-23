@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Iris</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111936;
+      --panel-2:#0f1730;
+      --text:#eaf0ff;
+      --muted:#9cb0df;
+      --line:rgba(255,255,255,.10);
+      --accent:#6f8cff;
+      --accent-2:#8b5cf6;
+      --good:#37d67a;
+      --warn:#f5b14c;
+      --bad:#ff6b6b;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0; padding:0; background:
+      radial-gradient(circle at top left, rgba(111,140,255,.18), transparent 30%),
+      radial-gradient(circle at top right, rgba(139,92,246,.16), transparent 25%),
+      linear-gradient(180deg, #08101f 0%, #0b1020 100%);
+      color:var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100%;
+    }
+    a{color:inherit}
+    .wrap{max-width:1200px; margin:0 auto; padding:18px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 16px; background:rgba(17,25,54,.74); backdrop-filter: blur(16px);
+      border:1px solid var(--line); border-radius:24px; box-shadow: var(--shadow);
+      position:sticky; top:14px; z-index:20;
+    }
+    .brand{display:flex; align-items:center; gap:12px;}
+    .logo{
+      width:42px; height:42px; border-radius:14px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      display:grid; place-items:center; font-weight:900;
+      box-shadow:0 12px 24px rgba(111,140,255,.30);
+    }
+    .brand h1{margin:0; font-size:18px; line-height:1.1}
+    .brand p{margin:2px 0 0; color:var(--muted); font-size:12px}
+    .pill{
+      border:1px solid var(--line); background:rgba(255,255,255,.04);
+      color:var(--text); border-radius:999px; padding:10px 14px; font-size:13px;
+    }
+    .grid{
+      display:grid; grid-template-columns: 320px 1fr 320px; gap:18px; margin-top:18px;
+    }
+    .card{
+      background:rgba(17,25,54,.72); backdrop-filter: blur(16px);
+      border:1px solid var(--line); border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .card .head{padding:16px 16px 0;}
+    .card .body{padding:16px;}
+    .section-title{margin:0 0 10px; font-size:15px}
+    .muted{color:var(--muted)}
+    .btn{
+      border:0; cursor:pointer; padding:12px 14px; border-radius:16px;
+      color:white; font-weight:700; background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 10px 20px rgba(111,140,255,.25);
+    }
+    .btn.secondary{background:rgba(255,255,255,.06); box-shadow:none; border:1px solid var(--line)}
+    .btn.good{background:linear-gradient(135deg, #19c37d, #4ade80)}
+    .btn.bad{background:linear-gradient(135deg, #ff6b6b, #ff8b8b)}
+    .btn.small{padding:9px 12px; border-radius:14px; font-size:13px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .col{display:flex; flex-direction:column; gap:10px}
+    .input, .textarea, .select{
+      width:100%; background:rgba(255,255,255,.04); color:var(--text);
+      border:1px solid var(--line); border-radius:16px; padding:12px 14px; outline:none;
+    }
+    .textarea{min-height:120px; resize:vertical}
+    .input::placeholder, .textarea::placeholder{color:#7d8eb8}
+    .nav{
+      display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;
+      margin-top:18px;
+    }
+    .nav button{padding:12px 10px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); cursor:pointer}
+    .nav button.active{background:linear-gradient(135deg, rgba(111,140,255,.35), rgba(139,92,246,.30)); border-color:rgba(111,140,255,.5)}
+    .feed{display:flex; flex-direction:column; gap:14px}
+    .post{
+      border:1px solid var(--line); background:rgba(255,255,255,.04); border-radius:20px; padding:16px;
+    }
+    .post-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
+    .avatar{
+      width:42px; height:42px; border-radius:14px; display:grid; place-items:center;
+      background:linear-gradient(135deg, rgba(111,140,255,.30), rgba(139,92,246,.22)); font-weight:900;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .post-meta{display:flex; gap:12px; align-items:center}
+    .post h3{margin:0; font-size:15px}
+    .post .time{color:var(--muted); font-size:12px}
+    .tag{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.04); font-size:12px; color:var(--muted)}
+    .badge{font-size:12px; padding:6px 10px; border-radius:999px; font-weight:800}
+    .badge.good{background:rgba(55,214,122,.16); color:#9ff0c0}
+    .badge.warn{background:rgba(245,177,76,.16); color:#ffd79b}
+    .badge.bad{background:rgba(255,107,107,.18); color:#ffb3b3}
+    .stats{display:grid; grid-template-columns: repeat(3,1fr); gap:10px}
+    .stat{
+      border:1px solid var(--line); background:rgba(255,255,255,.04);
+      border-radius:18px; padding:14px;
+    }
+    .stat b{display:block; font-size:20px; margin-top:4px}
+    .list{display:flex; flex-direction:column; gap:10px}
+    .mini{
+      display:flex; justify-content:space-between; gap:10px; align-items:center;
+      border:1px solid var(--line); background:rgba(255,255,255,.04); border-radius:16px; padding:12px 14px;
+    }
+    .hidden{display:none !important}
+    .overlay{
+      position:fixed; inset:0; background:rgba(7,12,24,.76); display:flex; align-items:center; justify-content:center; padding:18px;
+      z-index:50;
+    }
+    .modal{
+      width:min(760px, 100%); background:linear-gradient(180deg, rgba(17,25,54,.98), rgba(12,18,39,.98));
+      border:1px solid var(--line); border-radius:28px; box-shadow: var(--shadow); overflow:hidden;
+    }
+    .modal .hero{
+      padding:24px; display:grid; gap:16px; grid-template-columns: 1.2fr .8fr; align-items:center;
+      background:radial-gradient(circle at top right, rgba(111,140,255,.20), transparent 35%);
+    }
+    .hero h2{margin:0; font-size:28px}
+    .hero p{margin:0; color:var(--muted)}
+    .auth{
+      display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 24px 24px;
+    }
+    .panel{
+      padding:16px; border-top:1px solid var(--line);
+    }
+    .notice{
+      border:1px solid rgba(111,140,255,.25); background:rgba(111,140,255,.08);
+      color:#d9e2ff; border-radius:18px; padding:12px 14px; font-size:13px;
+    }
+    .switch{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    .switch .btn{flex:1}
+    .footer-note{color:var(--muted); font-size:12px; line-height:1.5}
+.file-preview{
+      margin-top:10px; border:1px dashed rgba(255,255,255,.16); border-radius:18px; padding:12px; background:rgba(255,255,255,.03);
+    }
+    .file-preview img, .file-preview video{
+      width:100%; max-height:300px; object-fit:cover; border-radius:14px; display:block;
+    }
+    .file-chip{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--muted); font-size:12px;
+    }
+    .comment-box{margin-top:10px; display:flex; gap:10px}
+    .comment-box input{flex:1}
+    .searchbar{display:flex; gap:10px}
+    @media (max-width: 1080px){
+      .grid{grid-template-columns:1fr}
+      .modal .hero,.auth{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">SI</div>
+        <div>
+          <h1>Social Iris</h1>
+          <p>Red social con cuentas, publicaciones y moderación</p>
+        </div>
+      </div>
+      <div class="row">
+        <span class="pill" id="sessionPill">Sesión local</span>
+        <button class="btn secondary small" id="logoutBtn">Salir</button>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="active" data-tab="home">Inicio</button>
+      <button data-tab="apps">Apps</button>
+      <button data-tab="publish">Publicar</button>
+      <button data-tab="profile">Perfil</button>
+      <button data-tab="moderation">Moderación</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="head">
+          <h3 class="section-title">Mi cuenta</h3>
+        </div>
+        <div class="body" id="sidebarUser">
+          <div class="notice">Inicia sesión para publicar, seguir y comentar.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <h3 class="section-title" id="mainTitle">Inicio</h3>
+        </div>
+        <div class="body" id="mainContent"></div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <h3 class="section-title">Explorar</h3>
+        </div>
+        <div class="body">
+          <div class="stats">
+            <div class="stat"><span class="muted">Usuarios</span><b id="statUsers">0</b></div>
+            <div class="stat"><span class="muted">Posts</span><b id="statPosts">0</b></div>
+            <div class="stat"><span class="muted">Apps</span><b id="statApps">0</b></div>
+          </div>
+          <div style="height:14px"></div>
+          <input class="input" id="searchInput" placeholder="Buscar usuarios o posts..." />
+          <div style="height:14px"></div>
+          <div class="list" id="rightList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <div class="hero">
+        <div>
+          <h2>Bienvenido a Social Iris</h2>
+          <p>Cuenta con usuario y contraseña, publicaciones, sección de apps y filtros de seguridad para contenido 18+ o ilegal.</p>
+          <div class="switch">
+            <button class="btn" id="showLoginBtn">Entrar</button>
+            <button class="btn secondary" id="showSignupBtn">Crear cuenta</button>
+          </div>
+          <div class="notice" style="margin-top:14px">
+            Si conectas Supabase, esta app puede usar <b>usuario + contraseña</b> mediante las funciones SQL que ya tienes creadas.
+          </div>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.04); border-radius:22px;">
+          <div class="body">
+            <div class="list">
+              <div class="mini"><span>Feed</span><span class="badge good">Publicaciones</span></div>
+              <div class="mini"><span>Apps</span><span class="badge warn">Compartir</span></div>
+              <div class="mini"><span>Moderación</span><span class="badge bad">18+ / ilegal</span></div>
+              <div class="mini"><span>Seguidores</span><span class="badge">Social</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth" id="authForms">
+        <div class="panel">
+          <h3 class="section-title" id="authTitle">Entrar</h3>
+          <div class="col">
+            <input class="input" id="username" placeholder="Usuario" autocomplete="username" />
+            <input class="input" id="password" type="password" placeholder="Contraseña" autocomplete="current-password" />
+            <input class="input hidden" id="displayName" placeholder="Nombre para mostrar (opcional)" />
+            <button class="btn" id="authSubmit">Entrar</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="footer-note">
+            <b>Modo local + Supabase</b><br>
+            Esta demo guarda datos en el navegador para que funcione de inmediato. Si el backend responde, se puede sincronizar con Supabase.
+          </div>
+          <div style="height:14px"></div>
+          <div class="notice">
+            Reglas activas: el sistema marca como <b>pendiente</b> cualquier publicación con señales de contenido adulto o ilegal.
+          </div>
+          <div style="height:14px"></div>
+          <div class="footer-note">
+            Recomendación: si vas a usarla de verdad, activa RLS y políticas en Supabase para cada tabla.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      useSupabase: true,
+      supabaseUrl: "https://htudsvaqtrnwalbdboxz.supabase.co",
+      supabaseKey: "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD",
+      useLocalFallback: true
+    };
+
+    const STORAGE_KEY = "social_iris_state_v1";
+    const SESSION_KEY = "social_iris_session_v1";
+
+    const moderationTerms = [
+      "18+", "porn", "porno", "sexo", "sexual", "nude", "naked", "explicit",
+      "weapon", "arma", "gun", "rifle", "pistola", "drug", "droga", "cocaine",
+      "cocaina", "illegal", "ilegal", "weapon_sale", "adult_content"
+    ];
+
+    const defaultState = {
+      users: [
+        {
+          id: "u_demo",
+          username: "demo",
+          displayName: "Demo Iris",
+          passwordHash: null,
+          bio: "Cuenta de prueba para Social Iris.",
+          followers: [],
+          following: [],
+          avatarSeed: "DI"
+        }
+      ],
+      posts: [
+        {
+          id: "p_demo",
+          author: "Demo Iris",
+          authorUsername: "demo",
+          type: "post",
+          title: "¡Bienvenido a Social Iris!",
+          content: "Aquí puedes publicar, compartir apps y moderar contenido 18+ o ilegal.",
+          appName: "",
+          appUrl: "",
+          tags: ["bienvenida"],
+          visibility: "public",
+          status: "approved",
+          is18Plus: false,
+          isIllegal: false,
+          createdAt: new Date().toISOString(),
+          likes: [],
+          comments: []
+        }
+      ],
+      pending: [],
+      reports: []
+    };
+
+    let state = loadState();
+    let currentUser = loadSessionUser();
+    let authMode = "login";
+    let activeTab = "home";
+
+    const $ = (id) => document.getElementById(id);
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        return {
+          ...structuredClone(defaultState),
+          ...parsed,
+          users: parsed.users || structuredClone(defaultState.users),
+          posts: parsed.posts || structuredClone(defaultState.posts),
+          pending: parsed.pending || [],
+          reports: parsed.reports || []
+        };
+      }catch{
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      refreshStats();
+    }
+
+    function loadSessionUser(){
+      try{
+        const raw = localStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function saveSession(user){
+      currentUser = user;
+      if(user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+      else localStorage.removeItem(SESSION_KEY);
+      renderAll();
+    }
+
+    async function sha256(text){
+      const enc = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", enc);
+      return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function detectFlags(text){
+      const hay = (text || "").toLowerCase();
+      return {
+        is18Plus: moderationTerms.some(t => hay.includes(t)),
+        isIllegal: ["illegal", "weapon", "arma", "droga", "cocaine", "cocaina"].some(t => hay.includes(t))
+      };
+    }
+
+    function normalizeTags(value){
+      return String(value || "")
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+
+    function initials(name){
+      return String(name || "SI")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0,2)
+        .map(x => x[0].toUpperCase())
+        .join("");
+    }
+
+    function currentProfile(){
+      if(!currentUser) return null;
+      return state.users.find(u => u.username === currentUser.username) || null;
+    }
+
+    function seedToAvatar(seed){
+      return seed || initials(currentUser?.displayName || currentUser?.username || "SI");
+    }
+
+    function isFollowing(username){
+      const me = currentProfile();
+      if(!me) return false;
+      return (me.following || []).includes(username);
+    }
+
+    function refreshStats(){
+      $("statUsers").textContent = state.users.length.toString();
+      $("statPosts").textContent = state.posts.filter(p => p.status === "approved").length.toString();
+      $("statApps").textContent = state.posts.filter(p => p.type === "app" && p.status === "approved").length.toString();
+    }
+
+    function setTab(tab){
+      activeTab = tab;
+      document.querySelectorAll(".nav button").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+      $("mainTitle").textContent = ({
+        home: "Inicio",
+        apps: "Apps",
+        publish: "Publicar",
+        profile: "Perfil",
+        moderation: "Moderación"
+      })[tab] || "Inicio";
+      renderMain();
+    }
+
+    function renderSidebar(){
+      if(!currentUser){
+        $("sidebarUser").innerHTML = `
+          <div class="notice">Aún no has iniciado sesión.</div>
+        `;
+        $("sessionPill").textContent = "Sin sesión";
+        return;
+      }
+      const me = currentProfile();
+      $("sessionPill").textContent = "@" + currentUser.username;
+      $("sidebarUser").innerHTML = `
+        <div class="post" style="margin-bottom:12px">
+          <div class="post-top">
+            <div class="post-meta">
+              <div class="avatar">${escapeHtml(seedToAvatar(me?.avatarSeed))}</div>
+              <div>
+                <h3>${escapeHtml(me?.displayName || currentUser.username)}</h3>
+                <div class="time">@${escapeHtml(currentUser.username)}</div>
+              </div>
+            </div>
+            <span class="badge good">Activo</span>
+          </div>
+          <div style="height:10px"></div>
+          <div class="muted">${escapeHtml(me?.bio || "Sin biografía todavía.")}</div>
+        </div>
+        <div class="list">
+          <div class="mini"><span>Siguiendo</span><b>${(me?.following || []).length}</b></div>
+          <div class="mini"><span>Seguidores</span><b>${(me?.followers || []).length}</b></div>
+          <div class="mini"><span>Moderación</span><b>${state.pending.length}</b></div>
+        </div>
+      `;
+    }
+
+    function renderMain(){
+      if(!currentUser){
+        $("mainContent").innerHTML = `<div class="notice">Inicia sesión para ver el feed.</div>`;
+        renderRightList([]);
+        return;
+      }
+      const me = currentProfile();
+      const q = ($("searchInput").value || "").trim().toLowerCase();
+      let posts = [...state.posts].filter(p => p.status === "approved");
+      if(q){
+        posts = posts.filter(p =>
+          (p.content || "").toLowerCase().includes(q) ||
+          (p.title || "").toLowerCase().includes(q) ||
+          (p.appName || "").toLowerCase().includes(q) ||
+          (p.authorUsername || "").toLowerCase().includes(q)
+        );
+      }
+
+      if(activeTab === "home"){
+        $("mainContent").innerHTML = `
+          <div class="row" style="margin-bottom:12px">
+            <span class="tag">Feed público</span>
+            <span class="tag">Usuario: @${escapeHtml(currentUser.username)}</span>
+            <span class="tag">Moderación automática</span>
+          </div>
+          <div class="feed">
+            ${posts.length ? posts.map(renderPost).join("") : `<div class="notice">No hay publicaciones para mostrar.</div>`}
+          </div>
+        `;
+      }
+
+      if(activeTab === "apps"){
+        const apps = posts.filter(p => p.type === "app");
+        $("mainContent").innerHTML = `
+          <div class="row" style="margin-bottom:12px">
+            <span class="tag">Apps compartidas</span>
+            <span class="tag">Descubrir</span>
+          </div>
+          <div class="feed">
+            ${apps.length ? apps.map(renderPost).join("") : `<div class="notice">Todavía no hay apps publicadas.</div>`}
+          </div>
+        `;
+      }
+
+      if(activeTab === "publish"){
+        $("mainContent").innerHTML = `
+          <div class="col">
+            <input class="input" id="postTitle" placeholder="Título" />
+            <select class="select" id="postType">
+              <option value="post">Publicación</option>
+              <option value="app">App</option>
+              <option value="image">Imagen</option>
+              <option value="video">Video</option>
+              <option value="text">Texto</option>
+            </select>
+            <textarea class="textarea" id="postContent" placeholder="¿Qué quieres publicar?"></textarea>
+            <div class="row">
+              <input class="input" id="postAppName" placeholder="Nombre de la app (si aplica)" />
+              <input class="input" id="postAppUrl" placeholder="URL de la app (si aplica)" />
+            </div>
+            <input class="input" id="postTags" placeholder="Etiquetas separadas por coma" />
+            <select class="select" id="postVisibility">
+              <option value="public">Público</option>
+              <option value="followers">Seguidores</option>
+              <option value="private">Privado</option>
+            </select>
+            <div class="col">
+              <label class="file-chip">
+                <input type="file" id="postMedia" accept="image/*,video/*,.pdf,.txt,.doc,.docx" />
+                <span>Elegir archivo desde mis archivos</span>
+              </label>
+              <div class="muted" style="font-size:12px">Se permite imagen, video o documento pequeño. Para archivos pesados conviene usar Supabase Storage.</div>
+              <div id="mediaPreview" class="file-preview hidden"></div>
+            </div>
+            <button class="btn good" id="publishBtn">Publicar</button>
+            <div class="notice">El sistema detecta palabras sensibles y manda la publicación a revisión.</div>
+          </div>
+        `;
+        const mediaInput = $("postMedia");
+        if (mediaInput) {
+          mediaInput.onchange = handleMediaPreview;
+        }
+        $("publishBtn").onclick = publishPost;
+      }
+
+      if(activeTab === "profile"){
+        $("mainContent").innerHTML = `
+          <div class="feed">
+            <div class="post">
+              <div class="post-top">
+                <div class="post-meta">
+                  <div class="avatar">${escapeHtml(seedToAvatar(me?.avatarSeed))}</div>
+                  <div>
+                    <h3>${escapeHtml(me?.displayName || currentUser.username)}</h3>
+                    <div class="time">@${escapeHtml(currentUser.username)}</div>
+                  </div>
+                </div>
+                <span class="badge good">Perfil</span>
+              </div>
+              <div style="height:12px"></div>
+              <div class="col">
+                <input class="input" id="profileDisplayName" placeholder="Nombre para mostrar" value="${escapeHtml(me?.displayName || "")}" />
+                <textarea class="textarea" id="profileBio" placeholder="Biografía">${escapeHtml(me?.bio || "")}</textarea>
+                <button class="btn" id="saveProfileBtn">Guardar perfil</button>
+              </div>
+            </div>
+            <div class="post">
+              <h3 style="margin-top:0">Mis publicaciones</h3>
+              <div class="feed" id="myPosts"></div>
+            </div>
+          </div>
+        `;
+        $("saveProfileBtn").onclick = saveProfile;
+        $("myPosts").innerHTML = state.posts
+          .filter(p => p.authorUsername === currentUser.username)
+          .map(renderPost)
+          .join("") || `<div class="notice">Todavía no has publicado nada.</div>`;
+      }
+
+      if(activeTab === "moderation"){
+        const pending = [...state.posts].filter(p => p.status === "pending");
+        $("mainContent").innerHTML = `
+          <div class="notice">Área de moderación: revisa publicaciones marcadas por contenido sensible.</div>
+          <div style="height:12px"></div>
+          <div class="feed">
+            ${pending.length ? pending.map(renderModerationCard).join("") : `<div class="notice">No hay publicaciones pendientes ahora mismo.</div>`}
+          </div>
+        `;
+      }
+
+      wirePostEvents();
+      renderRightList(posts);
+    }
+
+    function renderModerationCard(post){
+      return `
+        <div class="post">
+          <div class="post-top">
+            <div>
+              <h3>${escapeHtml(post.title || post.type.toUpperCase())}</h3>
+              <div class="time">@${escapeHtml(post.authorUsername)} · ${new Date(post.createdAt).toLocaleString()}</div>
+            </div>
+            <span class="badge warn">Pendiente</span>
+          </div>
+          <div style="height:10px"></div>
+          <div>${escapeHtml(post.content)}</div>
+          ${post.appName ? `<div style="height:8px"></div><div class="tag">App: ${escapeHtml(post.appName)}</div>` : ""}
+          <div style="height:12px"></div>
+          <div class="row">
+            <button class="btn good small" data-action="approve" data-id="${post.id}">Aprobar</button>
+            <button class="btn bad small" data-action="reject" data-id="${post.id}">Rechazar</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPost(post){
+      const likes = post.likes?.length || 0;
+      const comments = post.comments?.length || 0;
+      const isMine = currentUser && post.authorUsername === currentUser.username;
+      const flag = post.isIllegal ? "bad" : (post.is18Plus ? "warn" : "good");
+      const flagText = post.isIllegal ? "Ilegal" : (post.is18Plus ? "18+" : "Seguro");
+      return `
+        <div class="post">
+          <div class="post-top">
+            <div class="post-meta">
+              <div class="avatar">${escapeHtml(initials(post.author))}</div>
+              <div>
+                <h3>${escapeHtml(post.title || post.type.toUpperCase())}</h3>
+                <div class="time">@${escapeHtml(post.authorUsername)} · ${new Date(post.createdAt).toLocaleString()}</div>
+              </div>
+            </div>
+            <span class="badge ${flag}">${flagText}</span>
+          </div>
+          <div style="height:10px"></div>
+          ${post.type === "app" ? `<div class="tag">App: ${escapeHtml(post.appName || "Sin nombre")} ${post.appUrl ? '· <a href="'+escapeHtml(post.appUrl)+'" target="_blank" rel="noreferrer">Abrir</a>' : ""}</div><div style="height:10px"></div>` : ""}
+          <div>${escapeHtml(post.content)}</div>
+          ${post.mediaDataUrl ? renderMediaBlock(post) : ""}
+          ${post.tags?.length ? `<div style="height:10px"></div><div class="row">${post.tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+          <div style="height:12px"></div>
+          <div class="row">
+            <button class="btn secondary small" data-action="like" data-id="${post.id}">Me gusta (${likes})</button>
+            <button class="btn secondary small" data-action="comment" data-id="${post.id}">Comentar (${comments})</button>
+            <button class="btn secondary small" data-action="report" data-id="${post.id}">Reportar</button>
+            ${currentUser && post.authorUsername !== currentUser.username
+              ? `<button class="btn small" data-action="follow" data-user="${escapeHtml(post.authorUsername)}">${isFollowing(post.authorUsername) ? "Siguiendo" : "Seguir"}</button>` : ""}
+            ${isMine ? `<button class="btn bad small" data-action="delete" data-id="${post.id}">Eliminar</button>` : ""}
+          </div>
+          <div id="comments-${post.id}" class="list" style="margin-top:12px;"></div>
+        </div>
+      `;
+    }
+
+    function renderRightList(posts){
+      const users = state.users
+        .filter(u => !currentUser || u.username !== currentUser.username)
+        .filter(u => !($("searchInput").value || "").trim() || u.username.toLowerCase().includes(($("searchInput").value || "").trim().toLowerCase()) || (u.displayName || "").toLowerCase().includes(($("searchInput").value || "").trim().toLowerCase()))
+        .slice(0, 6);
+
+      const topPosts = [...posts].slice(0, 6);
+
+      $("rightList").innerHTML = `
+        <div class="mini"><span>Cuenta actual</span><b>${currentUser ? "@"+currentUser.username : "Invitado"}</b></div>
+        ${users.map(u => `
+          <div class="mini">
+            <div>
+              <div><b>${escapeHtml(u.displayName || u.username)}</b></div>
+              <div class="muted">@${escapeHtml(u.username)}</div>
+            </div>
+            <button class="btn secondary small" data-action="viewUser" data-user="${escapeHtml(u.username)}">Ver</button>
+          </div>
+        `).join("")}
+        ${topPosts.slice(0,3).map(p => `
+          <div class="mini">
+            <div>
+              <div><b>${escapeHtml(p.title || p.type)}</b></div>
+              <div class="muted">@${escapeHtml(p.authorUsername)}</div>
+            </div>
+            <span class="badge ${p.isIllegal ? 'bad' : (p.is18Plus ? 'warn' : 'good')}">${p.isIllegal ? 'Ilegal' : (p.is18Plus ? '18+' : 'OK')}</span>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function wirePostEvents(){
+      document.querySelectorAll("[data-action]").forEach(btn => {
+        btn.onclick = async () => {
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+          const username = btn.dataset.user;
+          if(action === "like") likePost(id);
+          if(action === "comment") commentPost(id);
+          if(action === "report") reportPost(id);
+          if(action === "follow") followUser(username);
+          if(action === "delete") deletePost(id);
+          if(action === "approve") moderatePost(id, true);
+          if(action === "reject") moderatePost(id, false);
+          if(action === "viewUser") viewUser(username);
+        };
+      });
+
+      document.querySelectorAll(".post").forEach(postEl => {
+        const postId = postEl.querySelector("[data-id]")?.dataset.id;
+        if(!postId) return;
+        const post = state.posts.find(p => p.id === postId);
+        const container = document.getElementById("comments-" + postId);
+        if(container){
+          container.innerHTML = (post?.comments || []).slice(-3).map(c => `
+            <div class="mini">
+              <div>
+                <div><b>@${escapeHtml(c.authorUsername)}</b></div>
+                <div class="muted">${escapeHtml(c.content)}</div>
+              </div>
+            </div>
+          `).join("");
+          if(currentUser){
+            container.insertAdjacentHTML("beforeend", `
+              <div class="comment-box">
+                <input class="input" placeholder="Escribe un comentario..." data-comment-input="${postId}">
+                <button class="btn secondary small" data-comment-send="${postId}">Enviar</button>
+              </div>
+            `);
+          }
+        }
+      });
+
+      document.querySelectorAll("[data-comment-send]").forEach(btn => {
+        btn.onclick = () => {
+          const postId = btn.dataset.commentSend;
+          const input = document.querySelector(`[data-comment-input="${postId}"]`);
+          const text = input.value.trim();
+          if(!text) return;
+          addComment(postId, text);
+          input.value = "";
+          renderAll();
+        };
+      });
+    }
+
+    function syncProfileFromState(){
+      const me = currentProfile();
+      if(!me) return;
+      currentUser.displayName = me.displayName;
+    }
+
+    async function signup(){
+      const username = $("username").value.trim();
+      const password = $("password").value;
+      const displayName = $("displayName").value.trim();
+
+      if(username.length < 3) return alert("El usuario debe tener al menos 3 caracteres.");
+      if(password.length < 6) return alert("La contraseña debe tener al menos 6 caracteres.");
+
+      // Local fallback
+      if(!CONFIG.useSupabase || !navigator.onLine){
+        const exists = state.users.some(u => u.username.toLowerCase() === username.toLowerCase());
+        if(exists) return alert("Ese usuario ya existe.");
+        const passwordHash = await sha256(password);
+        const user = {
+          id: crypto.randomUUID(),
+          username,
+          displayName: displayName || username,
+          passwordHash,
+          bio: "",
+          followers: [],
+          following: [],
+          avatarSeed: initials(displayName || username)
+        };
+        state.users.push(user);
+        saveState();
+        saveSession({ username, displayName: user.displayName, token: crypto.randomUUID(), local: true });
+        currentUser.passwordHash = passwordHash;
+        renderAll();
+        return;
+      }
+
+      try{
+        const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/rpc/create_account`, {
+          method: "POST",
+          headers: {
+            "apikey": CONFIG.supabaseKey,
+            "authorization": `Bearer ${CONFIG.supabaseKey}`,
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          body: JSON.stringify({
+            p_username: username,
+            p_password: password,
+            p_display_name: displayName || null
+          })
+        });
+        if(!res.ok){
+          const t = await res.text();
+          throw new Error(t);
+        }
+        // login after signup
+        await login(true);
+      }catch(err){
+        alert("No se pudo crear la cuenta en Supabase. Se usará modo local.\n\n" + err.message);
+        CONFIG.useSupabase = false;
+        return signup();
+      }
+    }
+
+    async function login(afterSignup=false){
+      const username = $("username").value.trim();
+      const password = $("password").value;
+      if(!username || !password) return alert("Escribe usuario y contraseña.");
+
+      if(!CONFIG.useSupabase || !navigator.onLine){
+        const found = state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+        if(!found) return alert("Usuario no encontrado.");
+        const hash = await sha256(password);
+        if(found.passwordHash && found.passwordHash !== hash) return alert("Contraseña incorrecta.");
+        saveSession({ username: found.username, displayName: found.displayName, token: crypto.randomUUID(), local: true });
+        renderAll();
+        return;
+      }
+
+      try{
+        const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/rpc/login_account`, {
+          method: "POST",
+          headers: {
+            "apikey": CONFIG.supabaseKey,
+            "authorization": `Bearer ${CONFIG.supabaseKey}`,
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          body: JSON.stringify({
+            p_username: username,
+            p_password: password
+          })
+        });
+        if(!res.ok){
+          const t = await res.text();
+          throw new Error(t);
+        }
+        const data = await res.json();
+        const row = Array.isArray(data) ? data[0] : data;
+        saveSession({
+          username: row.username,
+          displayName: row.display_name || row.username,
+          token: row.session_token,
+          role: row.role,
+          remote: true
+        });
+        await hydrateFromSupabase();
+        renderAll();
+      }catch(err){
+        alert("No se pudo iniciar sesión en Supabase. Se usará modo local.\n\n" + err.message);
+        CONFIG.useSupabase = false;
+        return login(afterSignup);
+      }
+    }
+
+    async function hydrateFromSupabase(){
+      if(!CONFIG.useSupabase || !currentUser?.remote) return;
+      try{
+        const [usersRes, postsRes] = await Promise.all([
+          fetch(`${CONFIG.supabaseUrl}/rest/v1/accounts?select=id,username,display_name,bio,avatar_url,role,is_banned,created_at`, {
+            headers: {
+              "apikey": CONFIG.supabaseKey,
+              "authorization": `Bearer ${CONFIG.supabaseKey}`,
+              "accept": "application/json"
+            }
+          }),
+          fetch(`${CONFIG.supabaseUrl}/rest/v1/feed_public?select=*`, {
+            headers: {
+              "apikey": CONFIG.supabaseKey,
+              "authorization": `Bearer ${CONFIG.supabaseKey}`,
+              "accept": "application/json"
+            }
+          })
+        ]);
+        if(usersRes.ok){
+          const users = await usersRes.json();
+          state.users = users.map(u => ({
+            id: u.id,
+            username: u.username,
+            displayName: u.display_name || u.username,
+            bio: u.bio || "",
+            followers: [],
+            following: [],
+            avatarSeed: initials(u.display_name || u.username)
+          }));
+        }
+        if(postsRes.ok){
+          const posts = await postsRes.json();
+          state.posts = posts.map(p => ({
+            id: p.id,
+            author: p.username || "user",
+            authorUsername: p.username || "user",
+            type: p.post_type || "post",
+            title: p.title || "",
+            content: p.content || "",
+            appName: p.app_name || "",
+            appUrl: p.app_url || "",
+            tags: p.tags || [],
+            visibility: p.visibility || "public",
+            status: p.status || "approved",
+            is18Plus: p.is_18_plus || false,
+            isIllegal: p.is_illegal || false,
+            createdAt: p.created_at || new Date().toISOString(),
+            likes: [],
+            comments: []
+          }));
+        }
+        saveState();
+      }catch(e){
+        console.warn("Hydration failed:", e);
+      }
+    }
+
+    function logout(){
+      saveSession(null);
+      $("username").value = "";
+      $("password").value = "";
+      $("displayName").value = "";
+      $("authOverlay").classList.remove("hidden");
+    }
+
+    function switchAuth(mode){
+      authMode = mode;
+      $("authTitle").textContent = mode === "login" ? "Entrar" : "Crear cuenta";
+      $("displayName").classList.toggle("hidden", mode === "login");
+      $("authSubmit").textContent = mode === "login" ? "Entrar" : "Crear cuenta";
+      $("showLoginBtn").classList.toggle("hidden", mode === "login");
+      $("showSignupBtn").classList.toggle("hidden", mode === "signup");
+    }
+
+    function renderMediaBlock(post){
+      const name = escapeHtml(post.mediaName || "Archivo");
+      const type = String(post.mediaType || "").toLowerCase();
+      const data = post.mediaDataUrl || "";
+      if(!data) return "";
+      if(type.startsWith("image/")){
+        return `<div style="height:10px"></div><div class="file-preview"><img src="${data}" alt="${name}" /><div style="height:8px"></div><span class="file-chip">${name}</span></div>`;
+      }
+      if(type.startsWith("video/")){
+        return `<div style="height:10px"></div><div class="file-preview"><video controls src="${data}"></video><div style="height:8px"></div><span class="file-chip">${name}</span></div>`;
+      }
+      return `<div style="height:10px"></div><div class="file-preview"><a class="tag" href="${data}" download="${name}">Descargar ${name}</a></div>`;
+    }
+
+    function handleMediaPreview(){
+      const input = $("postMedia");
+      const preview = $("mediaPreview");
+      if(!input || !preview) return;
+      const file = input.files && input.files[0];
+      if(!file){
+        preview.classList.add("hidden");
+        preview.innerHTML = "";
+        return;
+      }
+      if(file.size > 5 * 1024 * 1024){
+        input.value = "";
+        preview.classList.add("hidden");
+        preview.innerHTML = "";
+        alert("Ese archivo es muy pesado para esta versión. Usa uno menor a 5 MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        const type = file.type || "";
+        preview.classList.remove("hidden");
+        if(type.startsWith("image/")){
+          preview.innerHTML = `<img src="${dataUrl}" alt="${escapeHtml(file.name)}"><div style="height:8px"></div><span class="file-chip">${escapeHtml(file.name)}</span>`;
+        }else if(type.startsWith("video/")){
+          preview.innerHTML = `<video controls src="${dataUrl}"></video><div style="height:8px"></div><span class="file-chip">${escapeHtml(file.name)}</span>`;
+        }else{
+          preview.innerHTML = `<a class="tag" href="${dataUrl}" download="${escapeHtml(file.name)}">Archivo listo: ${escapeHtml(file.name)}</a>`;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function publishPost(){
+      const title = $("postTitle").value.trim();
+      const type = $("postType").value;
+      const content = $("postContent").value.trim();
+      const appName = $("postAppName").value.trim();
+      const appUrl = $("postAppUrl").value.trim();
+      const tags = normalizeTags($("postTags").value);
+      const visibility = $("postVisibility").value;
+      const mediaInput = $("postMedia");
+      const file = mediaInput && mediaInput.files ? mediaInput.files[0] : null;
+
+      if(!content && !title && type !== "app" && !file) return alert("Escribe algo o elige un archivo para publicar.");
+      if(type === "app" && !appName && !appUrl && !content) return alert("Para apps, llena al menos un dato.");
+
+      let mediaDataUrl = "";
+      let mediaName = "";
+      let mediaType = "";
+      if(file){
+        if(file.size > 5 * 1024 * 1024){
+          return alert("El archivo es muy pesado para esta versión. Usa uno menor a 5 MB.");
+        }
+        mediaDataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
+          reader.readAsDataURL(file);
+        });
+        mediaName = file.name;
+        mediaType = file.type || "application/octet-stream";
+      }
+
+      const flags = detectFlags([title, content, appName, appUrl, mediaName, ...tags].join(" "));
+      const post = {
+        id: crypto.randomUUID(),
+        author: currentUser.displayName || currentUser.username,
+        authorUsername: currentUser.username,
+        type,
+        title: title || (type === "app" ? appName : "Publicación"),
+        content,
+        appName,
+        appUrl,
+        tags,
+        visibility,
+        mediaName,
+        mediaType,
+        mediaDataUrl,
+        status: (flags.is18Plus || flags.isIllegal) ? "pending" : "approved",
+        is18Plus: flags.is18Plus,
+        isIllegal: flags.isIllegal,
+        moderationNotes: (flags.is18Plus || flags.isIllegal) ? "Detectado por filtro local." : "",
+        createdAt: new Date().toISOString(),
+        likes: [],
+        comments: []
+      };
+
+      state.posts.unshift(post);
+      if(post.status === "pending") state.pending.unshift(post);
+      saveState();
+
+      $("postTitle").value = "";
+      $("postContent").value = "";
+      $("postAppName").value = "";
+      $("postAppUrl").value = "";
+      $("postTags").value = "";
+      $("postVisibility").value = "public";
+      if(mediaInput) mediaInput.value = "";
+      const preview = $("mediaPreview");
+      if(preview){ preview.classList.add("hidden"); preview.innerHTML = ""; }
+      setTab("home");
+      alert(post.status === "pending" ? "Tu publicación quedó en revisión." : "Publicado correctamente.");
+    }
+
+    function saveProfile(){
+      const me = currentProfile();
+      if(!me) return;
+      me.displayName = $("profileDisplayName").value.trim() || currentUser.username;
+      me.bio = $("profileBio").value.trim();
+      currentUser.displayName = me.displayName;
+      saveState();
+      saveSession({...currentUser, displayName: me.displayName});
+      alert("Perfil guardado.");
+    }
+
+    function likePost(postId){
+      const post = state.posts.find(p => p.id === postId);
+      if(!post) return;
+      post.likes = post.likes || [];
+      const username = currentUser.username;
+      if(post.likes.includes(username)) post.likes = post.likes.filter(x => x !== username);
+      else post.likes.push(username);
+      saveState();
+      renderAll();
+    }
+
+    function addComment(postId, content){
+      const post = state.posts.find(p => p.id === postId);
+      if(!post) return;
+      post.comments = post.comments || [];
+      const flags = detectFlags(content);
+      post.comments.push({
+        id: crypto.randomUUID(),
+        authorUsername: currentUser.username,
+        content,
+        createdAt: new Date().toISOString(),
+        status: (flags.is18Plus || flags.isIllegal) ? "pending" : "approved",
+        is18Plus: flags.is18Plus,
+        isIllegal: flags.isIllegal
+      });
+      saveState();
+    }
+
+    function commentPost(postId){
+      const input = document.querySelector(`[data-comment-input="${postId}"]`);
+      if(input){
+        input.focus();
+      } else {
+        alert("Abre los comentarios debajo del post para escribir.");
+      }
+    }
+
+    function reportPost(postId){
+      const reason = prompt("Razón del reporte: spam, adult, illegal, harassment, etc.");
+      if(!reason) return;
+      state.reports.push({
+        id: crypto.randomUUID(),
+        reporter: currentUser.username,
+        postId,
+        reason,
+        createdAt: new Date().toISOString()
+      });
+      saveState();
+      alert("Reporte enviado.");
+    }
+
+    function followUser(username){
+      const me = currentProfile();
+      if(!me) return;
+      me.following = me.following || [];
+      if(me.following.includes(username)){
+        me.following = me.following.filter(u => u !== username);
+      }else{
+        me.following.push(username);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function deletePost(postId){
+      state.posts = state.posts.filter(p => p.id !== postId);
+      saveState();
+      renderAll();
+    }
+
+    function moderatePost(postId, approve){
+      const post = state.posts.find(p => p.id === postId);
+      if(!post) return;
+      post.status = approve ? "approved" : "rejected";
+      state.pending = state.pending.filter(p => p.id !== postId);
+      saveState();
+      renderAll();
+    }
+
+    function viewUser(username){
+      const user = state.users.find(u => u.username === username);
+      if(!user) return;
+      alert(`@${user.username}\nNombre: ${user.displayName || user.username}\nBio: ${user.bio || "Sin bio"}`);
+    }
+
+    function renderAll(){
+      renderSidebar();
+      refreshStats();
+      renderMain();
+      $("authOverlay").classList.toggle("hidden", !!currentUser);
+    }
+
+    // events
+    $("logoutBtn").onclick = logout;
+    $("showLoginBtn").onclick = () => { authMode = "login"; switchAuth("login"); };
+    $("showSignupBtn").onclick = () => { authMode = "signup"; switchAuth("signup"); };
+    $("authSubmit").onclick = () => authMode === "login" ? login() : signup();
+    $("searchInput").oninput = renderAll;
+    document.querySelectorAll(".nav button").forEach(btn => btn.onclick = () => setTab(btn.dataset.tab));
+
+    $("username").addEventListener("keydown", e => { if(e.key === "Enter") authMode === "login" ? login() : signup(); });
+    $("password").addEventListener("keydown", e => { if(e.key === "Enter") authMode === "login" ? login() : signup(); });
+
+    // initial mode
+    switchAuth("login");
+    if(currentUser){
+      $("authOverlay").classList.add("hidden");
+      if(currentUser.remote) hydrateFromSupabase().finally(renderAll);
+      else renderAll();
+    }else{
+      renderAll();
+    }
+  </script>
+</body>
+</html>
