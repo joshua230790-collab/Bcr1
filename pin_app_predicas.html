@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PIN único · RN Costa Rica</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0a1020;
+      --card: #10182c;
+      --line: rgba(255,255,255,.08);
+      --text: #eff4ff;
+      --muted: #a9b4d4;
+      --accent: #7c5cff;
+      --accent2: #23c483;
+      --danger: #ff6b6b;
+      --shadow: 0 24px 70px rgba(0,0,0,.36);
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 10% 10%, rgba(124,92,255,.20), transparent 45%),
+        radial-gradient(900px 700px at 90% 0%, rgba(35,196,131,.15), transparent 40%),
+        var(--bg);
+      display: grid; place-items: center;
+      padding: 20px;
+    }
+    .card {
+      width: min(820px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero { padding: 22px; display:flex; gap: 14px; align-items:center; }
+    .logo {
+      width: 64px; height: 64px; border-radius: 18px; object-fit: cover;
+      border: 1px solid rgba(255,255,255,.12);
+      background: #0f172a;
+    }
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 38px); line-height: 1.05; }
+    .muted { color: var(--muted); margin-top: 8px; }
+    .body { padding: 22px; border-top: 1px solid var(--line); }
+    label { display:block; margin: 10px 0 7px; color: #dbe4ff; font-size: 14px; font-weight: 600; }
+    input {
+      width: 100%; padding: 14px 15px; border-radius: 16px; border: 1px solid var(--line);
+      background: rgba(4,10,22,.65); color: var(--text); outline: none;
+    }
+    input:focus { border-color: rgba(124,92,255,.75); box-shadow: 0 0 0 4px rgba(124,92,255,.12); }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+    .btn {
+      appearance:none; border:none; cursor:pointer; border-radius: 16px; padding: 13px 16px;
+      font-weight: 700; color: white; background: linear-gradient(135deg, var(--accent), #4fd1c5);
+      box-shadow: 0 14px 30px rgba(124,92,255,.18);
+    }
+    .btn.secondary { background: rgba(255,255,255,.06); border: 1px solid var(--line); box-shadow:none; }
+    .btn.good { background: linear-gradient(135deg, #1dbf73, #23c483); }
+    .msg {
+      margin-top: 12px; padding: 12px 14px; border-radius: 14px;
+      border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.03);
+      white-space: pre-wrap;
+    }
+    .msg.ok { color: #b7ffe4; border-color: rgba(35,196,131,.3); }
+    .msg.err { color: #ffd0d0; border-color: rgba(255,107,107,.3); }
+    .pinbox {
+      margin-top: 16px; padding: 18px; border-radius: 18px;
+      background: rgba(124,92,255,.10); border: 1px solid rgba(124,92,255,.22);
+      font-size: 28px; letter-spacing: 0.25em; text-align: center; font-weight: 800;
+    }
+    .small { color: var(--muted); font-size: 13px; }
+    .hide { display:none !important; }
+    .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap: wrap; }
+    a { color: #c9d6ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="hero">
+      <img class="logo" src="logo.png" alt="Logo RN Costa Rica" onerror="this.style.display='none'">
+      <div>
+        <h1>Generador de PIN único</h1>
+        <div class="muted">Usa esta app para crear o cambiar el PIN que se valida en la app principal.</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="topline">
+        <div class="small">Conectado a Supabase · PIN cifrado en base de datos</div>
+        <a href="main_app.html">Volver a la app principal</a>
+      </div>
+
+      <div id="authArea">
+        <div class="row">
+          <div style="flex:1 1 260px;">
+            <label for="username">Usuario</label>
+            <input id="username" autocomplete="username" placeholder="tu_usuario" />
+          </div>
+          <div style="flex:1 1 260px;">
+            <label for="password">Contraseña</label>
+            <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" id="loginBtn">Iniciar sesión</button>
+        </div>
+        <div class="msg" id="authMsg">Debes iniciar sesión para crear tu PIN.</div>
+      </div>
+
+      <div id="pinArea" class="hide">
+        <div class="msg" id="sessionMsg">Sesión lista.</div>
+        <div class="row">
+          <button class="btn good" id="generateBtn">Generar / cambiar PIN</button>
+          <button class="btn secondary" id="copyBtn" disabled>Copiar PIN</button>
+          <button class="btn secondary" id="logoutBtn">Cerrar sesión</button>
+        </div>
+
+        <div class="pinbox hide" id="pinBox">00000000</div>
+        <div class="small" style="margin-top:10px;">Guarda este PIN fuera de la app si vas a usarlo para entrar desde la app principal. Por seguridad, el PIN se guarda cifrado en Supabase.</div>
+
+        <div style="margin-top:18px;">
+          <label for="verifyPin">Verificar PIN</label>
+          <input id="verifyPin" inputmode="numeric" maxlength="8" placeholder="00000000" />
+          <div class="row">
+            <button class="btn secondary" id="verifyBtn">Comprobar</button>
+          </div>
+          <div class="msg" id="verifyMsg">Aquí puedes probar si el PIN coincide con el que guardaste.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const SUPABASE_URL = "https://wntsgbbzycyxkceuykdl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_cfNEM5Mi66VKsRBwGhmFEQ_NtbltJeP";
+const MAIN_APP_URL = "main_app.html"; // cambia esto por el enlace real de tu app principal si la alojas en GitHub
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUser = null;
+let currentPin = '';
+
+const $ = (id) => document.getElementById(id);
+function setMsg(el, text, type='') {
+  el.className = 'msg' + (type ? ' ' + type : '');
+  el.textContent = text;
+}
+function usernameToEmail(username) {
+  const clean = String(username || '').trim().toLowerCase().replace(/\s+/g, '');
+  return clean.includes('@') ? clean : `${clean}@predicas.local`;
+}
+
+function showLoggedIn() {
+  $('authArea').classList.add('hide');
+  $('pinArea').classList.remove('hide');
+  $('sessionMsg').textContent = `Sesión activa: ${currentUser?.user_metadata?.username || currentUser?.email || ''}`;
+}
+
+function showLoggedOut() {
+  $('authArea').classList.remove('hide');
+  $('pinArea').classList.add('hide');
+  $('pinBox').classList.add('hide');
+  $('copyBtn').disabled = true;
+  currentPin = '';
+}
+
+$('loginBtn').addEventListener('click', async () => {
+  const username = $('username').value.trim();
+  const password = $('password').value;
+  if (!username || !password) {
+    setMsg($('authMsg'), 'Completa usuario y contraseña.', 'err');
+    return;
+  }
+  const email = usernameToEmail(username);
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    currentUser = data.user;
+    showLoggedIn();
+    setMsg($('authMsg'), 'Entrada correcta.', 'ok');
+  } catch (err) {
+    setMsg($('authMsg'), err.message || String(err), 'err');
+  }
+});
+
+$('generateBtn').addEventListener('click', async () => {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb.rpc('create_or_rotate_access_pin', {
+      p_user_id: currentUser.id
+    });
+    if (error) throw error;
+    currentPin = String(data || '');
+    $('pinBox').textContent = currentPin;
+    $('pinBox').classList.remove('hide');
+    $('copyBtn').disabled = false;
+    setMsg($('sessionMsg'), 'PIN generado. Copia este PIN ahora porque es el que usarás en la app principal.', 'ok');
+  } catch (err) {
+    setMsg($('sessionMsg'), err.message || String(err), 'err');
+  }
+});
+
+$('copyBtn').addEventListener('click', async () => {
+  if (!currentPin) return;
+  try {
+    await navigator.clipboard.writeText(currentPin);
+    setMsg($('sessionMsg'), 'PIN copiado al portapapeles.', 'ok');
+  } catch {
+    setMsg($('sessionMsg'), 'No se pudo copiar automáticamente. Selecciónalo manualmente.', 'err');
+  }
+});
+
+$('verifyBtn').addEventListener('click', async () => {
+  if (!currentUser) return;
+  const pin = $('verifyPin').value.trim();
+  try {
+    const { data, error } = await sb.rpc('verify_access_pin', {
+      p_user_id: currentUser.id,
+      p_pin: pin
+    });
+    if (error) throw error;
+    if (data === true) {
+      setMsg($('verifyMsg'), 'PIN correcto.', 'ok');
+    } else {
+      setMsg($('verifyMsg'), 'PIN incorrecto.', 'err');
+    }
+  } catch (err) {
+    setMsg($('verifyMsg'), err.message || String(err), 'err');
+  }
+});
+
+$('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentPin = '';
+  showLoggedOut();
+  setMsg($('authMsg'), 'Sesión cerrada.', '');
+});
+
+sb.auth.getSession().then(({ data }) => {
+  if (data?.session?.user) {
+    currentUser = data.session.user;
+    showLoggedIn();
+  }
+});
+</script>
+</body>
+</html>
