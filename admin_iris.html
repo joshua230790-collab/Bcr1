@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Iris</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --pri:#5b5bf7; --pri2:#3b82f6; --danger:#fee2e2; --ok:#ecfdf3; --warn:#fff7ed;
+      --shadow:0 14px 32px rgba(17,24,39,.08);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:1200px; margin:0 auto; padding:16px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0 18px; position:sticky; top:0; background:rgba(245,247,251,.92); backdrop-filter:blur(14px); z-index:10; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#111827,#5b5bf7); color:#fff; display:grid; place-items:center; font-weight:900; }
+    .btn { border:0; border-radius:16px; padding:12px 16px; font-weight:800; cursor:pointer; }
+    .b1 { background:linear-gradient(135deg,var(--pri),var(--pri2)); color:#fff; }
+    .b2 { background:var(--danger); color:#991b1b; }
+    .b3 { background:#eef2ff; color:#3730a3; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:24px; padding:18px; box-shadow:var(--shadow); }
+    .title { margin:0 0 6px; font-size:20px; }
+    .sub { margin:0; color:var(--muted); }
+    .field { margin:10px 0; }
+    .field label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+    input,textarea,select { width:100%; border:1px solid var(--line); border-radius:16px; padding:13px 14px; font:inherit; background:#fff; outline:none; }
+    textarea { min-height:104px; resize:vertical; }
+    .hide { display:none!important; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+    .s { background:#f8fafc; border:1px solid var(--line); border-radius:18px; padding:12px; text-align:center; }
+    .s b { display:block; font-size:18px; }
+    .s span { font-size:12px; color:var(--muted); }
+    .tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+    .pill { display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:800; }
+    .user,.post { margin-top:12px; padding:14px; border:1px solid var(--line); border-radius:20px; background:#fff; }
+    .row { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .name { font-weight:900; }
+    .small { font-size:12px; color:var(--muted); }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:9px 12px; font-weight:800; cursor:pointer; }
+    .okBtn { background:var(--ok); color:#166534; border-color:#bbf7d0; }
+    .noBtn { background:var(--danger); color:#991b1b; border-color:#fecaca; }
+    .adminBtn { background:#eef2ff; color:#3730a3; border-color:#dbeafe; }
+    .media { margin-top:10px; border-radius:18px; overflow:hidden; border:1px solid var(--line); }
+    .media img,.media video { width:100%; display:block; max-height:440px; object-fit:cover; }
+    .notice { padding:14px; border-radius:16px; border:1px solid #fed7aa; background:var(--warn); color:#9a3412; }
+    .okbox { padding:14px; border-radius:16px; border:1px solid #bbf7d0; background:var(--ok); color:#166534; }
+    .loader { width:18px; height:18px; border:2px solid #c7d2fe; border-top-color:#5b5bf7; border-radius:50%; display:inline-block; animation:spin 1s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .console { white-space:pre-wrap; font-size:13px; color:#374151; background:#f8fafc; border:1px dashed var(--line); padding:12px; border-radius:16px; min-height:48px; }
+    @media(max-width:980px) { .grid { grid-template-columns:1fr; } .top { position:static; background:transparent; backdrop-filter:none; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <div style="font-size:24px;font-weight:900">Admin Iris</div>
+        <div style="color:var(--muted);font-weight:700">Crear cuenta de admin y luego entrar</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn b1" id="btnRefresh">Actualizar</button>
+      <button class="btn b2 hide" id="btnLogout">Salir</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+
+  <div id="entryView" class="grid">
+    <div class="card">
+      <h2 class="title">Admin</h2>
+      <p class="sub">Si no existe un admin, crea la cuenta aquí. Si ya existe, inicia sesión.</p>
+      <div class="tabs">
+        <button class="btn b1" id="tabLogin">Iniciar sesión</button>
+        <button class="btn b3" id="tabCreate">Crear admin</button>
+      </div>
+
+      <div id="loginBox" style="margin-top:12px">
+        <div class="field"><label>Usuario</label><input id="loginUsername" type="text" placeholder="admin"></div>
+        <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" placeholder="••••••••"></div>
+        <button class="btn b1" id="btnLogin" style="width:100%">Entrar</button>
+      </div>
+
+      <div id="createBox" class="hide" style="margin-top:12px">
+        <div class="field"><label>Usuario admin</label><input id="createUsername" type="text" placeholder="admin"></div>
+        <div class="field"><label>Contraseña admin</label><input id="createPassword" type="password" placeholder="mínimo 6 caracteres"></div>
+        <div class="field"><label>Nombre visible</label><input id="createDisplay" type="text" placeholder="Administrador"></div>
+        <button class="btn b1" id="btnCreateAdmin" style="width:100%">Crear admin</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="title">Estado</h2>
+      <p class="sub">La app usa tus tablas `iris_*` y no necesita correo.</p>
+      <div class="notice" style="margin-top:12px">Admin solo visible para quien tenga la cuenta y contraseña correctas.</div>
+      <div class="okbox" style="margin-top:12px">Desde aquí puedes aprobar usuarios, publicar y borrar contenido.</div>
+      <div class="console" style="margin-top:12px" id="debugBox">Listo.</div>
+    </div>
+  </div>
+
+  <div id="appView" class="grid hide" style="margin-top:16px">
+    <div class="card">
+      <h2 class="title">Resumen</h2>
+      <p class="sub">Cuentas y posts.</p>
+      <div class="stats">
+        <div class="s"><b id="stPending">0</b><span>Pendientes</span></div>
+        <div class="s"><b id="stActive">0</b><span>Activas</span></div>
+        <div class="s"><b id="stPosts">0</b><span>Posts</span></div>
+      </div>
+      <div class="tabs">
+        <button class="btn b1" id="tabUsers">Usuarios</button>
+        <button class="btn b3" id="tabPosts">Contenido</button>
+      </div>
+
+      <div id="panelUsers" style="margin-top:12px">
+        <div class="field"><label>Buscar usuarios</label><input id="searchUsers" type="text" placeholder="usuario, nombre o bio"></div>
+        <div id="usersList"></div>
+      </div>
+
+      <div id="panelPosts" class="hide" style="margin-top:12px">
+        <div class="notice">Solo el admin puede subir y eliminar contenido.</div>
+        <div class="field"><label>Nuevo post</label><textarea id="postContent" placeholder="Escribe algo..."></textarea></div>
+        <div class="field"><label>Archivo</label><input id="postFile" type="file" accept="image/*,video/*"></div>
+        <button class="btn b1" id="btnCreatePost" style="width:100%">Publicar</button>
+        <div id="postsList" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="title">Notas</h2>
+      <p class="sub">Abraza el panel, aprueba usuarios y sube contenido.</p>
+      <div class="okbox" style="margin-top:12px">Aprobado = el usuario ya puede ver contenido en Social Iris.</div>
+      <div class="notice" style="margin-top:12px">Pendiente = el usuario solo verá el mensaje de espera.</div>
+      <div class="console" id="statusBox" style="margin-top:12px">Listo.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://htudsvaqtrnwalbdboxz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (id) => document.getElementById(id);
+const sessionKey = 'iris_admin_session_v5';
+let adminUser = null;
+let profile = null;
+
+function note(t, type='notice') { $('msg').innerHTML = `<div class="${type}" style="margin:14px 0;padding:14px;border-radius:16px">${t}</div>`; setTimeout(() => {$('msg').innerHTML='';}, 4200); }
+function log(t) { $('debugBox').textContent = t; $('statusBox').textContent = t; }
+function esc(s='') { return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+function ago(date) { const d=new Date(date), s=Math.max(1,(Date.now()-d.getTime())/1000), u=[['año',31536000],['mes',2592000],['día',86400],['hora',3600],['min',60],['seg',1]]; for(const [n,k] of u){ if(s>=k) return `${Math.floor(s/k)} ${n}${Math.floor(s/k)===1?'':'s'} atrás`; } return 'hace un momento'; }
+async function sha256(text) { const bytes = new TextEncoder().encode(text); const buf = await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+function setSession(payload) { localStorage.setItem(sessionKey, JSON.stringify(payload)); }
+function getSession() { try { return JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch { return null; } }
+function clearSession() { localStorage.removeItem(sessionKey); }
+function showOnly(view) {
+  $('entryView').classList.add('hide');
+  $('appView').classList.add('hide');
+  view.classList.remove('hide');
+}
+
+async function getAdminRow() {
+  const { data, error } = await sb.from('iris_users').select('*').eq('username', 'admin').maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function createAdmin() {
+  const username = $('createUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_');
+  const password = $('createPassword').value;
+  const display_name = $('createDisplay').value.trim();
+  if (!username || !password) return note('Escribe usuario y contraseña', 'notice');
+  if (password.length < 6) return note('La contraseña debe tener al menos 6 caracteres', 'notice');
+  log('Creando admin...');
+  const password_hash = await sha256(password);
+  const { data: exists } = await sb.from('iris_users').select('id').eq('username', username).maybeSingle();
+  if (exists) return note('Ese usuario ya existe', 'notice');
+  const { error } = await sb.from('iris_users').insert({
+    username,
+    password_hash,
+    display_name: display_name || 'Administrador',
+    role: 'admin',
+    is_active: true,
+    approved_at: new Date().toISOString()
+  });
+  if (error) { log('Error: ' + error.message); return note(error.message, 'notice'); }
+  note('Admin creado. Ahora inicia sesión.', 'ok');
+  log('Admin creado.');
+}
+
+async function loginAdmin() {
+  const username = $('loginUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_');
+  const password = $('loginPassword').value;
+  if (!username || !password) return note('Escribe usuario y contraseña', 'notice');
+  log('Validando admin...');
+  const { data, error } = await sb.from('iris_users').select('*').eq('username', username).maybeSingle();
+  if (error || !data) return note('Usuario no encontrado', 'notice');
+  const hash = await sha256(password);
+  if (data.password_hash !== hash) return note('Contraseña incorrecta', 'notice');
+  if (data.role !== 'admin') return note('Esa cuenta no es admin', 'notice');
+  if (!data.is_active) return note('Cuenta admin inactiva', 'notice');
+  setSession({ user_id: data.id });
+  log('Sesión admin iniciada.');
+  await boot();
+}
+
+async function currentAdminFromSession() {
+  const s = getSession();
+  if (!s?.user_id) return null;
+  const { data } = await sb.from('iris_users').select('*').eq('id', s.user_id).maybeSingle();
+  return data || null;
+}
+
+async function uploadFile(file, folder='posts') {
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = `admin/${folder}/${name}`;
+  const { error } = await sb.storage.from('iris-files').upload(path, file, { upsert:false, contentType:file.type });
+  if (error) throw error;
+  const { data } = sb.storage.from('iris-files').getPublicUrl(path);
+  return { path, publicUrl: data.publicUrl };
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('iris_users').select('*').eq('id', adminUser.id).maybeSingle();
+  profile = data;
+}
+
+async function loadCounts() {
+  const [pending, active, posts] = await Promise.all([
+    sb.from('iris_users').select('id', { count:'exact', head:true }).eq('is_active', false),
+    sb.from('iris_users').select('id', { count:'exact', head:true }).eq('is_active', true),
+    sb.from('iris_posts').select('id', { count:'exact', head:true }),
+  ]);
+  $('stPending').textContent = pending.count ?? 0;
+  $('stActive').textContent = active.count ?? 0;
+  $('stPosts').textContent = posts.count ?? 0;
+}
+
+async function loadUsers() {
+  const q = ($('searchUsers').value || '').trim().toLowerCase();
+  const { data, error } = await sb.from('iris_users').select('id, username, display_name, bio, role, is_active, created_at, approved_at, avatar_url').order('created_at', { ascending:false }).limit(250);
+  const box = $('usersList');
+  if (error) { box.innerHTML = `<div class="notice">Error: ${esc(error.message)}</div>`; return; }
+  const users = (data || []).filter(u => !q || [u.username, u.display_name, u.bio].join(' ').toLowerCase().includes(q));
+  if (!users.length) { box.innerHTML = `<div class="notice">Sin resultados.</div>`; return; }
+
+  box.innerHTML = users.map(u => `
+    <div class="user">
+      <div class="row">
+        <div>
+          <div class="name">${esc(u.display_name || u.username)}</div>
+          <div class="small">@${esc(u.username)} · ${u.role} · ${u.is_active ? 'activa' : 'pendiente'}</div>
+          <div class="small">${esc(u.bio || '')}</div>
+        </div>
+        <div class="pill">${u.is_active ? 'OK' : 'PEND'}</div>
+      </div>
+      <div class="actions">
+        <button class="chip okBtn" data-action="approve" data-id="${u.id}">Aprobar</button>
+        <button class="chip noBtn" data-action="block" data-id="${u.id}">Bloquear</button>
+        <button class="chip adminBtn" data-action="admin" data-id="${u.id}">Hacer admin</button>
+        <button class="chip" data-action="revoke" data-id="${u.id}">Quitar admin</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('[data-action]').forEach(btn => btn.onclick = async () => {
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    const patch = { updated_at: new Date().toISOString() };
+    if (action === 'approve') { patch.is_active = true; patch.approved_at = new Date().toISOString(); }
+    if (action === 'block') { patch.is_active = false; }
+    if (action === 'admin') { patch.role = 'admin'; patch.is_active = true; patch.approved_at = new Date().toISOString(); }
+    if (action === 'revoke') { patch.role = 'user'; }
+    const { error } = await sb.from('iris_users').update(patch).eq('id', id);
+    if (error) return note(error.message, 'notice');
+    note('Usuario actualizado', 'ok');
+    await boot();
+  });
+}
+
+function mediaHtml(f) {
+  return f.file_type?.startsWith('video')
+    ? `<div class="media"><video controls src="${f.file_url}"></video></div>`
+    : `<div class="media"><img src="${f.file_url}" alt="media"></div>`;
+}
+
+async function loadPosts() {
+  const { data, error } = await sb.from('iris_posts').select(`
+    id, content, visibility, created_at, user_id,
+    iris_users:user_id ( id, username, display_name, role, avatar_url, is_active ),
+    iris_post_files ( id, file_url, file_type ),
+    iris_comments ( id )
+  `).order('created_at', { ascending:false }).limit(120);
+  const box = $('postsList');
+  if (error) { box.innerHTML = `<div class="notice">Error: ${esc(error.message)}</div>`; return; }
+  if (!(data || []).length) { box.innerHTML = `<div class="notice">Todavía no hay contenido.</div>`; return; }
+
+  box.innerHTML = data.map(p => `
+    <div class="post">
+      <div class="row">
+        <div>
+          <div class="name">${esc(p.iris_users?.display_name || p.iris_users?.username || 'Admin')}</div>
+          <div class="small">@${esc(p.iris_users?.username || 'admin')} · ${ago(p.created_at)} · ${p.visibility}</div>
+        </div>
+        <button class="chip noBtn" data-del-post="${p.id}">Eliminar</button>
+      </div>
+      <div style="white-space:pre-wrap;line-height:1.55;margin-top:10px">${esc(p.content)}</div>
+      ${(p.iris_post_files || []).map(mediaHtml).join('')}
+      <div class="small" style="margin-top:10px">Comentarios: ${(p.iris_comments || []).length}</div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('[data-del-post]').forEach(btn => btn.onclick = async () => {
+    const { error } = await sb.from('iris_posts').delete().eq('id', btn.dataset.delPost);
+    if (error) return note(error.message, 'notice');
+    note('Post eliminado', 'ok');
+    await loadPosts();
+    await loadCounts();
+  });
+}
+
+async function createPost() {
+  if (!adminUser) return note('No hay sesión de admin', 'notice');
+  const content = ($('postContent').value || '').trim();
+  const file = $('postFile').files[0];
+  if (!content && !file) return note('Escribe algo o sube un archivo', 'notice');
+
+  const { data: post, error } = await sb.from('iris_posts').insert({
+    user_id: adminUser.id,
+    content: content || '(archivo)',
+    visibility: 'public'
+  }).select().single();
+  if (error) return note(error.message, 'notice');
+
+  if (file) {
+    try {
+      const up = await uploadFile(file, 'posts');
+      const { error: fErr } = await sb.from('iris_post_files').insert({
+        post_id: post.id,
+        user_id: adminUser.id,
+        file_url: up.publicUrl,
+        file_path: up.path,
+        file_type: file.type
+      });
+      if (fErr) throw fErr;
+    } catch (e) {
+      return note('Post creado, pero falló el archivo: ' + e.message, 'notice');
+    }
+  }
+
+  $('postContent').value = '';
+  $('postFile').value = '';
+  note('Contenido publicado', 'ok');
+  await loadPosts();
+  await loadCounts();
+}
+
+async function boot() {
+  log('Buscando cuenta admin...');
+  adminUser = await currentAdminFromSession();
+  const adminRow = await getAdminRow();
+  if (adminRow && adminRow.role === 'admin' && adminRow.is_active) {
+    $('entryView').classList.add('hide');
+    $('appView').classList.remove('hide');
+    $('btnLogout').classList.remove('hide');
+    if (adminUser && adminUser.role === 'admin' && adminUser.is_active) {
+      await loadProfile();
+      await loadCounts();
+      await loadUsers();
+      await loadPosts();
+      log(`Admin listo: @${adminUser.username}`);
+      return;
+    }
+    // si no hay sesión, mostrar formulario
+    $('entryView').classList.remove('hide');
+    $('appView').classList.add('hide');
+    $('btnLogout').classList.add('hide');
+    log('Inicia sesión como admin.');
+    return;
+  }
+
+  $('entryView').classList.remove('hide');
+  $('appView').classList.add('hide');
+  $('btnLogout').classList.add('hide');
+
+  if (!adminRow) {
+    log('No existe admin. Usa Crear admin.');
+  } else {
+    log('Admin existe. Inicia sesión.');
+  }
+}
+
+$('tabLogin').onclick = () => { $('loginBox').classList.remove('hide'); $('createBox').classList.add('hide'); };
+$('tabCreate').onclick = () => { $('loginBox').classList.add('hide'); $('createBox').classList.remove('hide'); };
+$('btnCreateAdmin').onclick = createAdmin;
+$('btnLogin').onclick = loginAdmin;
+$('btnLogout').onclick = async () => { clearSession(); adminUser = null; profile = null; note('Sesión cerrada','ok'); await boot(); };
+$('btnRefresh').onclick = async () => { await boot(); note('Actualizado','ok'); };
+$('tabUsers').onclick = () => { $('panelUsers').classList.remove('hide'); $('panelPosts').classList.add('hide'); };
+$('tabPosts').onclick = () => { $('panelUsers').classList.add('hide'); $('panelPosts').classList.remove('hide'); };
+$('searchUsers').oninput = loadUsers;
+$('btnCreatePost').onclick = createPost;
+
+window.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
