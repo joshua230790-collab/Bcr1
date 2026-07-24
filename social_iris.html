@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Iris</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --pri:#5b5bf7; --pri2:#3b82f6; --danger:#fee2e2; --ok:#ecfdf3; --warn:#fff7ed;
+      --shadow:0 14px 32px rgba(17,24,39,.08);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:1180px; margin:0 auto; padding:16px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0 18px; position:sticky; top:0; background:rgba(245,247,251,.92); backdrop-filter:blur(14px); z-index:10; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#5b5bf7,#2dd4bf); color:#fff; display:grid; place-items:center; font-weight:900; }
+    .btn { border:0; border-radius:16px; padding:12px 16px; font-weight:800; cursor:pointer; }
+    .b1 { background:linear-gradient(135deg,var(--pri),var(--pri2)); color:#fff; }
+    .b2 { background:var(--danger); color:#991b1b; }
+    .b3 { background:#eef2ff; color:#3730a3; }
+    .grid { display:grid; grid-template-columns:360px 1fr; gap:16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:24px; padding:18px; box-shadow:var(--shadow); }
+    .title { margin:0 0 6px; font-size:20px; }
+    .sub { margin:0; color:var(--muted); }
+    .field { margin:10px 0; }
+    .field label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+    input,textarea,select { width:100%; border:1px solid var(--line); border-radius:16px; padding:13px 14px; font:inherit; background:#fff; outline:none; }
+    textarea { min-height:104px; resize:vertical; }
+    .hide { display:none!important; }
+    .tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+    .profile { display:flex; gap:14px; align-items:center; }
+    .ava { width:62px; height:62px; border-radius:20px; background:#eef2ff; display:grid; place-items:center; overflow:hidden; font-weight:900; font-size:24px; }
+    .ava img { width:100%; height:100%; object-fit:cover; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+    .s { background:#f8fafc; border:1px solid var(--line); border-radius:18px; padding:12px; text-align:center; }
+    .s b { display:block; font-size:18px; }
+    .s span { font-size:12px; color:var(--muted); }
+    .notice { padding:14px; border-radius:16px; background:var(--warn); color:#9a3412; border:1px solid #fed7aa; }
+    .ok { padding:14px; border-radius:16px; background:var(--ok); color:#166534; border:1px solid #bbf7d0; }
+    .post { background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; margin-bottom:14px; }
+    .row { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .meta { display:flex; gap:10px; align-items:center; }
+    .uname { font-weight:900; }
+    .time { font-size:12px; color:var(--muted); }
+    .media { margin-top:10px; border-radius:18px; overflow:hidden; border:1px solid var(--line); }
+    .media img,.media video { width:100%; display:block; max-height:560px; object-fit:cover; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .chip { border:1px solid var(--line); border-radius:999px; padding:10px 14px; background:#fff; font-weight:800; cursor:pointer; }
+    .chip.on { background:#fff1f2; border-color:#fecdd3; color:#be123c; }
+    .commentBox { margin-top:12px; border-top:1px solid var(--line); padding-top:12px; }
+    .comment { margin-top:8px; background:#f8fafc; border:1px solid var(--line); border-radius:16px; padding:10px 12px; }
+    .loader { width:18px; height:18px; border:2px solid #c7d2fe; border-top-color:#5b5bf7; border-radius:50%; display:inline-block; animation:spin 1s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .console { white-space:pre-wrap; font-size:13px; color:#374151; background:#f8fafc; border:1px dashed var(--line); padding:12px; border-radius:16px; min-height:48px; }
+    @media(max-width:920px) { .grid { grid-template-columns:1fr; } .top { position:static; background:transparent; backdrop-filter:none; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">I</div>
+      <div>
+        <div style="font-size:24px;font-weight:900">Social Iris</div>
+        <div style="color:var(--muted);font-weight:700">Usuario + contraseña · espera aprobación</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn b1" id="btnRefresh">Actualizar</button>
+      <button class="btn b2 hide" id="btnLogout">Salir</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+
+  <div id="authView" class="grid">
+    <div class="card">
+      <h2 class="title">Entrar o crear cuenta</h2>
+      <p class="sub">Solo necesitas usuario y contraseña.</p>
+      <div class="tabs">
+        <button class="btn b1" id="tabLogin">Iniciar sesión</button>
+        <button class="btn b3" id="tabSignup">Crear cuenta</button>
+      </div>
+
+      <div id="loginBox" style="margin-top:12px">
+        <div class="field"><label>Usuario</label><input id="loginUsername" type="text" autocomplete="username" placeholder="tu_usuario"></div>
+        <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <button class="btn b1" id="btnLogin" style="width:100%">Entrar</button>
+      </div>
+
+      <div id="signupBox" class="hide" style="margin-top:12px">
+        <div class="field"><label>Usuario</label><input id="signupUsername" type="text" autocomplete="username" placeholder="tu_usuario"></div>
+        <div class="field"><label>Contraseña</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="mínimo 6 caracteres"></div>
+        <div class="field"><label>Nombre visible</label><input id="signupDisplay" type="text" placeholder="Tu nombre"></div>
+        <button class="btn b1" id="btnSignup" style="width:100%">Crear cuenta</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="title">Importante</h2>
+      <p class="sub">Si la cuenta no está aprobada, no podrás explorar nada.</p>
+      <div class="notice" style="margin-top:12px" id="waitMsg">Esta cuenta se activará hasta que el admin lo permita.</div>
+      <div class="ok" style="margin-top:12px">Cuando te aprueben, aquí aparece el feed.</div>
+      <div style="margin-top:12px" class="console" id="debugBox">Listo.</div>
+    </div>
+  </div>
+
+  <div id="pendingView" class="card hide">
+    <h2 class="title">Cuenta pendiente</h2>
+    <p class="sub">Esta cuenta se activará hasta que el admin lo permita.</p>
+    <div class="notice" style="margin-top:12px">No puedes ver el contenido todavía.</div>
+    <div class="console" style="margin-top:12px">Estado: pendiente</div>
+  </div>
+
+  <div id="appView" class="grid hide">
+    <div class="card">
+      <h2 class="title">Mi perfil</h2>
+      <p class="sub">Edita tu nombre y avatar.</p>
+      <div class="profile" style="margin-top:14px">
+        <div class="ava" id="ava">I</div>
+        <div>
+          <div id="pName" style="font-size:18px;font-weight:900">Usuario</div>
+          <div id="pUser" style="color:var(--muted);font-weight:700">@usuario</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="s"><b id="stPosts">0</b><span>Posts</span></div>
+        <div class="s"><b id="stLikes">0</b><span>Likes</span></div>
+        <div class="s"><b id="stComments">0</b><span>Comentarios</span></div>
+      </div>
+      <div class="field"><label>Nombre visible</label><input id="editDisplay" type="text"></div>
+      <div class="field"><label>Bio</label><textarea id="editBio"></textarea></div>
+      <div class="field"><label>Avatar</label><input id="avatarFile" type="file" accept="image/*"></div>
+      <button class="btn b1" id="btnSaveProfile" style="width:100%">Guardar perfil</button>
+    </div>
+
+    <div class="card">
+      <h2 class="title">Feed</h2>
+      <p class="sub">Solo contenido publicado por admin.</p>
+      <div id="feed" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://htudsvaqtrnwalbdboxz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rIaGIRpnqcrCgFyp7v2_Og_pUI8GynD";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (id) => document.getElementById(id);
+const APPROVED_MSG = 'Esta cuenta se activará hasta que el admin lo permita.';
+const sessionKey = 'iris_social_session_v5';
+
+let user = null;
+let profile = null;
+
+function note(t, type='notice') { $('msg').innerHTML = `<div class="${type}" style="margin:14px 0;padding:14px;border-radius:16px">${t}</div>`; setTimeout(() => {$('msg').innerHTML='';}, 4200); }
+function log(t) { $('debugBox').textContent = t; }
+function esc(s='') { return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+function ago(date) { const d=new Date(date), s=Math.max(1,(Date.now()-d.getTime())/1000), u=[['año',31536000],['mes',2592000],['día',86400],['hora',3600],['min',60],['seg',1]]; for(const [n,k] of u){ if(s>=k) return `${Math.floor(s/k)} ${n}${Math.floor(s/k)===1?'':'s'} atrás`; } return 'hace un momento'; }
+async function sha256(text) { const bytes=new TextEncoder().encode(text); const buf=await crypto.subtle.digest('SHA-256', bytes); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function setSession(payload) { localStorage.setItem(sessionKey, JSON.stringify(payload)); }
+function getSession() { try { return JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch { return null; } }
+function clearSession() { localStorage.removeItem(sessionKey); }
+
+function showOnly(view) {
+  $('authView').classList.add('hide');
+  $('pendingView').classList.add('hide');
+  $('appView').classList.add('hide');
+  view.classList.remove('hide');
+}
+
+async function registerUser() {
+  const username = $('signupUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_');
+  const password = $('signupPassword').value;
+  const display_name = $('signupDisplay').value.trim();
+  if (!username || !password) return note('Escribe usuario y contraseña', 'notice');
+  if (password.length < 6) return note('La contraseña debe tener al menos 6 caracteres', 'notice');
+  log('Creando cuenta...');
+  const password_hash = await sha256(password);
+  const { data: exists } = await sb.from('iris_users').select('id').eq('username', username).maybeSingle();
+  if (exists) return note('Ese usuario ya existe', 'notice');
+  const { error } = await sb.from('iris_users').insert({
+    username, password_hash, display_name,
+    role: 'user', is_active: false
+  });
+  if (error) {
+    log('Error: ' + error.message);
+    return note(error.message, 'notice');
+  }
+  log('Cuenta creada. Esperando aprobación.');
+  note(APPROVED_MSG, 'ok');
+  $('signupPassword').value = '';
+}
+
+async function loginUser() {
+  const username = $('loginUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_');
+  const password = $('loginPassword').value;
+  if (!username || !password) return note('Escribe usuario y contraseña', 'notice');
+  log('Validando cuenta...');
+  const { data, error } = await sb.from('iris_users').select('*').eq('username', username).maybeSingle();
+  if (error || !data) return note('Usuario no encontrado', 'notice');
+  const hash = await sha256(password);
+  if (data.password_hash !== hash) return note('Contraseña incorrecta', 'notice');
+  setSession({ user_id: data.id });
+  log('Sesión iniciada.');
+  await boot();
+}
+
+async function currentUserFromSession() {
+  const s = getSession();
+  if (!s?.user_id) return null;
+  const { data } = await sb.from('iris_users').select('*').eq('id', s.user_id).maybeSingle();
+  return data || null;
+}
+
+async function uploadFile(file, folder='avatars') {
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = `${user.id}/${folder}/${name}`;
+  const { error } = await sb.storage.from('iris-files').upload(path, file, { upsert:false, contentType:file.type });
+  if (error) throw error;
+  const { data } = sb.storage.from('iris-files').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('iris_users').select('*').eq('id', user.id).maybeSingle();
+  profile = data;
+  $('pName').textContent = profile.display_name || profile.username || 'Usuario';
+  $('pUser').textContent = '@' + profile.username;
+  $('ava').innerHTML = profile.avatar_url ? `<img src="${profile.avatar_url}" alt="avatar">` : (profile.display_name || profile.username || 'I').slice(0,1).toUpperCase();
+  $('editDisplay').value = profile.display_name || '';
+  $('editBio').value = profile.bio || '';
+}
+
+async function loadStats() {
+  const [posts, likes, comments] = await Promise.all([
+    sb.from('iris_posts').select('id', { count:'exact', head:true }).eq('user_id', user.id),
+    sb.from('iris_likes').select('post_id', { count:'exact', head:true }).eq('user_id', user.id),
+    sb.from('iris_comments').select('id', { count:'exact', head:true }).eq('user_id', user.id),
+  ]);
+  $('stPosts').textContent = posts.count ?? 0;
+  $('stLikes').textContent = likes.count ?? 0;
+  $('stComments').textContent = comments.count ?? 0;
+}
+
+async function loadFeed() {
+  $('feed').innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted)"><span class="loader"></span> Cargando...</div>`;
+  const { data, error } = await sb.from('iris_posts').select(`
+    id, content, visibility, created_at, user_id,
+    iris_users:user_id ( id, username, display_name, avatar_url, role, is_active ),
+    iris_post_files ( id, file_url, file_type ),
+    iris_likes ( user_id ),
+    iris_comments ( id, content, created_at, user_id, iris_users:user_id ( username, display_name, avatar_url ) )
+  `).order('created_at', { ascending:false }).limit(100);
+
+  if (error) {
+    $('feed').innerHTML = `<div class="notice">Error: ${esc(error.message)}</div>`;
+    return;
+  }
+
+  const rows = (data || []).filter(p => p.iris_users?.role === 'admin' && p.iris_users?.is_active);
+  if (!rows.length) {
+    $('feed').innerHTML = `<div class="notice">Todavía no hay contenido del admin.</div>`;
+    return;
+  }
+
+  $('feed').innerHTML = rows.map(p => {
+    const media = (p.iris_post_files || []).map(f => f.file_type?.startsWith('video')
+      ? `<div class="media"><video controls src="${f.file_url}"></video></div>`
+      : `<div class="media"><img src="${f.file_url}" alt="media"></div>`).join('');
+    const liked = (p.iris_likes || []).some(l => l.user_id === user.id);
+    const comments = p.iris_comments || [];
+    return `
+      <div class="post" data-post="${p.id}">
+        <div class="row">
+          <div class="meta">
+            <div class="ava" style="width:48px;height:48px;border-radius:16px">
+              ${p.iris_users?.avatar_url ? `<img src="${p.iris_users.avatar_url}" alt="avatar">` : (p.iris_users?.display_name || p.iris_users?.username || 'A').slice(0,1).toUpperCase()}
+            </div>
+            <div>
+              <div class="uname">${esc(p.iris_users?.display_name || p.iris_users?.username || 'Admin')}</div>
+              <div class="time">@${esc(p.iris_users?.username || 'admin')} · ${ago(p.created_at)}</div>
+            </div>
+          </div>
+          <div class="time">Admin Iris</div>
+        </div>
+        <div style="white-space:pre-wrap;line-height:1.55;margin-top:10px">${esc(p.content)}</div>
+        ${media}
+        <div class="actions">
+          <button class="chip likeBtn ${liked ? 'on' : ''}" data-post="${p.id}">❤️ ${(p.iris_likes||[]).length}</button>
+          <button class="chip openComments" data-post="${p.id}">💬 ${comments.length}</button>
+        </div>
+        <div class="commentBox hide" data-box="${p.id}">
+          <div class="field"><label>Comentario</label><input type="text" placeholder="Escribe aquí..." data-in="${p.id}"></div>
+          <button class="btn b1" data-send="${p.id}">Enviar</button>
+          <div style="margin-top:10px">
+            ${comments.map(c => `
+              <div class="comment">
+                <div style="display:flex;justify-content:space-between;gap:8px"><b>@${esc(c.iris_users?.username || 'usuario')}</b><span class="time">${ago(c.created_at)}</span></div>
+                <div>${esc(c.content)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.openComments').forEach(b => b.onclick = () => document.querySelector(`[data-box="${b.dataset.post}"]`).classList.toggle('hide'));
+  document.querySelectorAll('.likeBtn').forEach(b => b.onclick = async () => {
+    const postId = b.dataset.post;
+    const liked = b.classList.contains('on');
+    if (liked) await sb.from('iris_likes').delete().eq('post_id', postId).eq('user_id', user.id);
+    else await sb.from('iris_likes').insert({ post_id: postId, user_id: user.id });
+    await loadFeed();
+    await loadStats();
+  });
+  document.querySelectorAll('[data-send]').forEach(b => b.onclick = async () => {
+    const postId = b.dataset.send;
+    const input = document.querySelector(`[data-in="${postId}"]`);
+    const content = (input.value || '').trim();
+    if (!content) return note('Escribe un comentario', 'notice');
+    const { error } = await sb.from('iris_comments').insert({ post_id: postId, user_id: user.id, content });
+    if (error) return note(error.message, 'notice');
+    input.value = '';
+    await loadFeed();
+    await loadStats();
+  });
+}
+
+async function saveProfile() {
+  const display_name = $('editDisplay').value.trim();
+  const bio = $('editBio').value.trim();
+  let avatar_url = profile?.avatar_url || '';
+  const file = $('avatarFile').files[0];
+  if (file) avatar_url = await uploadFile(file, 'avatars');
+  const { error } = await sb.from('iris_users').update({
+    display_name, bio, avatar_url, updated_at: new Date().toISOString()
+  }).eq('id', user.id);
+  if (error) return note(error.message, 'notice');
+  await loadProfile();
+  note('Perfil guardado', 'ok');
+}
+
+async function boot() {
+  user = await currentUserFromSession();
+  if (!user) {
+    showOnly($('authView'));
+    $('btnLogout').classList.add('hide');
+    return;
+  }
+  await loadProfile();
+  const active = !!profile?.is_active;
+  if (!active) {
+    showOnly($('pendingView'));
+    $('btnLogout').classList.remove('hide');
+    return;
+  }
+  showOnly($('appView'));
+  $('btnLogout').classList.remove('hide');
+  await loadStats();
+  await loadFeed();
+}
+
+$('tabLogin').onclick = () => { $('loginBox').classList.remove('hide'); $('signupBox').classList.add('hide'); };
+$('tabSignup').onclick = () => { $('loginBox').classList.add('hide'); $('signupBox').classList.remove('hide'); };
+$('btnLogin').onclick = loginUser;
+$('btnSignup').onclick = registerUser;
+$('btnLogout').onclick = async () => { clearSession(); user = null; profile = null; note('Sesión cerrada','ok'); await boot(); };
+$('btnRefresh').onclick = async () => { await boot(); note('Actualizado','ok'); };
+$('btnSaveProfile').onclick = saveProfile;
+
+window.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
