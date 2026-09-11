@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de código</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial;background:#111;color:#fff;margin:0;padding:25px}
+.box{max-width:450px;margin:auto;background:#1d1d1d;padding:25px;border-radius:18px;text-align:center}
+input,button{width:100%;padding:14px;margin:8px 0;box-sizing:border-box;border:0;border-radius:10px}
+button{background:#5865f2;color:#fff;font-weight:bold}.code{font-size:42px;letter-spacing:8px;margin:25px 0}
+</style></head><body><div class="box">
+<h1>🔐 Generar código</h1><input id="user" placeholder="Nombre de usuario">
+<button onclick="generar()">GENERAR CÓDIGO</button><div id="codigo" class="code">------</div>
+<button onclick="copiar()">COPIAR CÓDIGO</button><p id="msg"></p></div>
+<script>
+const SUPABASE_URL="https://wdmpmvbhsfcefeashhzu.supabase.co",SUPABASE_KEY="sb_publishable_5-KSM7bcrcfeETPIUQBX6A_gOb9xktL",db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let codigoActual="";
+async function generar(){const u=user.value.trim();if(!u)return msg.innerText="Escribe tu usuario";
+const {data,error}=await db.rpc("generate_code",{u:u});if(error)return msg.innerText=error.message;
+if(!data.success)return msg.innerText="Usuario no encontrado";codigoActual=data.code;codigo.innerText=codigoActual;msg.innerText="Código válido durante 10 minutos"}
+async function copiar(){if(!codigoActual)return;await navigator.clipboard.writeText(codigoActual);msg.innerText="Código copiado ✅"}
+</script></body></html>
