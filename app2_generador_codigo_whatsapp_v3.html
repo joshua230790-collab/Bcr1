@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de código</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{margin:0;background:#111;color:#fff;font-family:Arial}
+main{max-width:430px;margin:60px auto;padding:25px;background:#202c33;border-radius:15px}
+input,button{width:100%;padding:14px;margin:7px 0;border:0;border-radius:9px;box-sizing:border-box}
+input{background:#2a3942;color:white;font-size:16px}
+button{background:#00a884;color:white;font-weight:bold}
+#out{font-size:35px;text-align:center;letter-spacing:7px;margin:22px 0}
+#msg{min-height:24px}
+</style>
+</head>
+<body>
+<main>
+<h1>🔐 Código</h1>
+<p>Escribe exactamente tu usuario.</p>
+<input id="u" placeholder="Usuario" autocomplete="username">
+<button onclick="gen()">GENERAR CÓDIGO</button>
+<div id="out">------</div>
+<button onclick="copyCode()">COPIAR</button>
+<p id="msg"></p>
+<a href="https://joshua230790-collab.github.io/Bcr1/app1_whatsapp_corregido_v3.html" style="color:#53bdeb">← Volver al chat</a>
+</main>
+<script>
+const db=supabase.createClient("https://wdmpmvbhsfcefeashhzu.supabase.co","sb_publishable_5-KSM7bcrcfeETPIUQBX6A_gOb9xktL");
+let code="";
+async function gen(){
+  const username=document.getElementById("u").value.trim();
+  const msg=document.getElementById("msg");
+  const out=document.getElementById("out");
+  if(!username){msg.textContent="Escribe tu usuario.";return;}
+  msg.textContent="Buscando usuario...";
+  out.textContent="------";
+  try{
+    const {data,error}=await db.rpc("wa_code",{u:username});
+    if(error){msg.textContent="Error: "+error.message;return;}
+    if(!data || !data.success){msg.textContent=(data && data.error)||"Usuario no encontrado.";return;}
+    code=data.code;
+    out.textContent=code;
+    msg.textContent="Código válido por 10 minutos.";
+  }catch(e){msg.textContent="Error: "+(e.message||e);}
+}
+async function copyCode(){
+  const msg=document.getElementById("msg");
+  if(!code){msg.textContent="Primero genera un código.";return;}
+  try{await navigator.clipboard.writeText(code);msg.textContent="Código copiado.";}
+  catch(e){msg.textContent="No se pudo copiar automáticamente.";}
+}
+</script>
+</body>
+</html>
